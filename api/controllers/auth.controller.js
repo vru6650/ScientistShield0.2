@@ -12,7 +12,7 @@ import jwt from 'jsonwebtoken';
  * @returns {string} Signed JSON Web Token.
  */
 const signToken = (payload) => {
-  const secret = 'viren';
+  const secret = process.env.JWT_SECRET;
   if (!secret) {
     // Using the same error handler ensures consistent error responses
     throw errorHandler(500, 'JWT secret is missing');
