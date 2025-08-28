@@ -95,6 +95,16 @@ export const getTutorials = async (req, res, next) => {
     }
 };
 
+// Fetch distinct tutorial categories
+export const getTutorialCategories = async (req, res, next) => {
+    try {
+        const categories = await Tutorial.distinct('category');
+        res.status(200).json(categories);
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const updateTutorial = async (req, res, next) => {
     if (!req.user.isAdmin && req.user.id !== req.params.userId) {
         return next(errorHandler(403, 'You are not allowed to update this tutorial'));
