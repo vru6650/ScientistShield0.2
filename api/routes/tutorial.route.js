@@ -3,6 +3,7 @@ import { verifyToken } from '../utils/verifyUser.js';
 import {
     createTutorial,
     getTutorials,
+    getTutorialCategories,
     updateTutorial,
     deleteTutorial,
     addChapter,
@@ -16,6 +17,7 @@ const router = express.Router();
 // Tutorial CRUD operations (admin-only)
 router.post('/create', verifyToken, createTutorial);
 router.get('/gettutorials', getTutorials);
+router.get('/categories', getTutorialCategories);
 router.get('/getsingletutorial/:tutorialSlug', (req, res, next) => {
     req.query.slug = req.params.tutorialSlug;
     getTutorials(req, res, next);

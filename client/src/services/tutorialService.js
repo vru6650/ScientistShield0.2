@@ -19,6 +19,12 @@ export const getTutorials = async (searchQuery = '') => {
     return data;
 };
 
+// Fetch all distinct tutorial categories
+export const getCategories = async () => {
+    const { data } = await API.get('/api/tutorial/categories');
+    return data;
+};
+
 /**
  * Creates a new tutorial.
  * @param {object} formData - The tutorial data to create.
@@ -100,6 +106,7 @@ export const deleteChapter = async ({ tutorialId, chapterId, userId }) => {
 
 export default {
     getTutorials,
+    getCategories,
     createTutorial,
     updateTutorial,
     deleteTutorial,

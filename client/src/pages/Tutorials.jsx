@@ -6,7 +6,7 @@ import { Spinner, Alert, Button, TextInput, Select } from 'flowbite-react';
 import { motion } from 'framer-motion';
 
 import TutorialCard from '../components/TutorialCard';
-import { getTutorials } from '../services/tutorialService.js';
+import { getTutorials, getCategories } from '../services/tutorialService.js';
 import TutorialCardSkeleton from '../components/TutorialCardSkeleton'; // <-- Import the new skeleton component
 
 export default function Tutorials() {
@@ -60,17 +60,13 @@ export default function Tutorials() {
         navigate({ search: urlParams.toString() });
     };
 
-    const { data: categoriesData, isLoading: categoriesLoading, isError: categoriesError } = useQuery({
+    const {
+        data: categoriesData,
+        isLoading: categoriesLoading,
+        isError: categoriesError,
+    } = useQuery({
         queryKey: ['tutorialCategories'],
-        queryFn: async () => {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve([
-                        'JavaScript', 'React.js', 'Next.js', 'CSS', 'HTML', 'Node.js', 'C++', 'Python', 'Go', 'PHP', 'TypeScript', 'Data Science', 'Machine Learning'
-                    ]);
-                }, 500);
-            });
-        },
+        queryFn: getCategories,
         staleTime: Infinity,
     });
 
