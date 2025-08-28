@@ -18,7 +18,7 @@ import useUser from '../hooks/useUser';
 import CommentSection from '../components/CommentSection';
 import CodeEditor from '../components/CodeEditor';
 import QuizComponent from '../components/QuizComponent';
-import InteractiveCodeBlock from '../components/InteractiveCodeBlock';
+import InteractiveCodeBlock from '../components/InteractiveCodeBlock.jsx';
 
 import '../Tiptap.css';
 import '../pages/Scrollbar.css';

@@ -13,8 +13,16 @@
  * @returns {string} A slugified representation of the provided title.
  */
 export function generateSlug(title) {
-    return title
-        .trim()
+    if (typeof title !== 'string') {
+        throw new TypeError('Title must be a string');
+    }
+
+    const trimmed = title.trim();
+    if (trimmed === '') {
+        return '';
+    }
+
+    return trimmed
         .toLowerCase()
         // Remove all characters except letters, numbers, spaces and hyphens
         .replace(/[^a-z0-9\s-]/g, '')

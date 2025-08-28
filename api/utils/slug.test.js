@@ -16,3 +16,15 @@ test('generateSlug collapses whitespace and trims hyphens', () => {
     const slug = generateSlug('  Multiple   Spaces -- and symbols!!!  ');
     assert.strictEqual(slug, 'multiple-spaces-and-symbols');
 });
+
+test('generateSlug returns empty string when given only whitespace', () => {
+    const slug = generateSlug('   ');
+    assert.strictEqual(slug, '');
+});
+
+test('generateSlug throws an error when input is not a string', () => {
+    assert.throws(() => generateSlug(123), {
+        name: 'TypeError',
+        message: 'Title must be a string',
+    });
+});
