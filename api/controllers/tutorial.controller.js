@@ -267,7 +267,7 @@ export const markChapterAsComplete = async (req, res, next) => {
             return next(errorHandler(404, 'Chapter not found.'));
         }
 
-        if (chapter.completedBy.includes(userId)) {
+        if (chapter.completedBy.some(id => id.toString() === userId)) {
             return next(errorHandler(400, 'Chapter already marked as complete by this user.'));
         }
 
