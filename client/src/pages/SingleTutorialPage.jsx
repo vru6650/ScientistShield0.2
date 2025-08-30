@@ -23,7 +23,7 @@ import InteractiveCodeBlock from '../components/InteractiveCodeBlock.jsx';
 import '../Tiptap.css';
 import '../pages/Scrollbar.css';
 
-import { FaCode, FaQuestionCircle, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { FaCode, FaQuestionCircle, FaArrowLeft, FaArrowRight, FaVideo } from 'react-icons/fa';
 import { HiCheckCircle, HiExternalLink } from 'react-icons/hi';
 import { HiOutlineUserCircle, HiOutlineDocumentText } from 'react-icons/hi2';
 
@@ -111,6 +111,20 @@ const ChapterContent = ({ activeChapter, sanitizedContent, parserOptions }) => {
                     <QuizComponent quizId={activeChapter.quizId} />
                 </motion.div>
             );
+        case 'video':
+            // Renders video or rich media content embedded via Tiptap.
+            return (
+                <motion.div
+                    key="video-content"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.4 }}
+                    className='post-content tiptap p-3 max-w-full mx-auto leading-relaxed text-lg text-gray-700 dark:text-gray-300'
+                >
+                    {parse(sanitizedContent, parserOptions)}
+                </motion.div>
+            );
         case 'text':
         default:
             // Renders standard text content from the Tiptap editor.
@@ -136,7 +150,8 @@ const ChapterLink = ({ chapter, tutorial, activeChapterId, currentUser }) => {
     const Icon =
         chapter.contentType === 'code-interactive' ? FaCode :
             chapter.contentType === 'quiz' ? FaQuestionCircle :
-                HiOutlineDocumentText;
+                chapter.contentType === 'video' ? FaVideo :
+                    HiOutlineDocumentText;
 
     return (
         <motion.li

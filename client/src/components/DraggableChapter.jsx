@@ -2,7 +2,7 @@
 import { useRef, useState, useMemo } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { Button, Select, TextInput, Textarea, Spinner, Alert, Tooltip } from 'flowbite-react';
-import { FaTrash, FaChevronUp, FaChevronDown, FaCode, FaBook, FaList, FaQuestionCircle } from 'react-icons/fa';
+import { FaTrash, FaChevronUp, FaChevronDown, FaCode, FaBook, FaList, FaQuestionCircle, FaVideo } from 'react-icons/fa';
 import TiptapEditor from './TiptapEditor';
 import { motion } from 'framer-motion';
 
@@ -75,6 +75,7 @@ const DraggableChapter = ({
             case 'text': return <FaBook className="text-teal-500" />;
             case 'code-interactive': return <FaCode className="text-blue-500" />;
             case 'quiz': return <FaList className="text-purple-500" />;
+            case 'video': return <FaVideo className="text-red-500" />;
             default: return null;
         }
     };
@@ -89,6 +90,17 @@ const DraggableChapter = ({
                             content={chapter.content || ''}
                             onChange={(newContent) => handleChapterContentChange(index, newContent)}
                             placeholder="Start writing your chapter content here..."
+                        />
+                    </div>
+                );
+            case 'video':
+                return (
+                    <div className='flex flex-col gap-2'>
+                        <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Video Content</p>
+                        <TiptapEditor
+                            content={chapter.content || ''}
+                            onChange={(newContent) => handleChapterContentChange(index, newContent)}
+                            placeholder="Embed a video via the toolbar or paste embed code..."
                         />
                     </div>
                 );
@@ -181,6 +193,7 @@ const DraggableChapter = ({
                             {chapter.contentType === 'text' && 'Text Content'}
                             {chapter.contentType === 'code-interactive' && 'Code Example'}
                             {chapter.contentType === 'quiz' && 'Quiz'}
+                            {chapter.contentType === 'video' && 'Video'}
                         </span>
                     </span>
                     <Button onClick={(e) => { e.stopPropagation(); handleRemoveChapter(); }} color="failure" size="xs" outline>
@@ -217,6 +230,7 @@ const DraggableChapter = ({
                             onClick={(e) => e.stopPropagation()}
                         >
                             <option value="text">Text Content</option>
+                            <option value="video">Video Content</option>
                             <option value="code-interactive">Interactive Code Example</option>
                             <option value="quiz">Linked Quiz</option>
                         </Select>

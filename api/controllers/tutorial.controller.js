@@ -166,8 +166,8 @@ export const addChapter = async (req, res, next) => {
     if (!chapterTitle || order === undefined) {
         return next(errorHandler(400, 'Chapter title and order are required.'));
     }
-    if (contentType === 'text' && !content) {
-        return next(errorHandler(400, 'Chapter content is required for text chapters.'));
+    if ((contentType === 'text' || contentType === 'video') && !content) {
+        return next(errorHandler(400, 'Chapter content is required for text and video chapters.'));
     }
     if (contentType === 'code-interactive' && !initialCode) {
         return next(errorHandler(400, 'Initial code is required for interactive code chapters.'));
@@ -209,6 +209,17 @@ export const updateChapter = async (req, res, next) => {
         return next(errorHandler(403, 'You are not allowed to update this chapter'));
     }
     const { chapterTitle, content, order, contentType, initialCode, expectedOutput, quizId } = req.body;
+
+    if ((contentType === 'text' || contentType === 'video') && !content) {
+        return next(errorHandler(400, 'Chapter content is required for text and video chapters.'));
+    }
+    if (contentType === 'code-interactive' && !initialCode) {
+        return next(errorHandler(400, 'Initial code is required for interactive code chapters.'));
+    }
+    if (contentType === 'quiz' && !quizId) {
+        return next(errorHandler(400, 'A quiz ID is required for quiz chapters.'));
+    }
+
     const updateFields = {};
     if (chapterTitle !== undefined) updateFields.chapterTitle = chapterTitle;
     if (content !== undefined) updateFields.content = content;
