@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button, ToggleSwitch, Spinner, Alert } from 'flowbite-react';
 import { useSelector } from 'react-redux';
-import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave } from 'react-icons/fa';
+import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import LanguageSelector from './LanguageSelector';
@@ -16,7 +16,7 @@ const defaultCodes = {
     python: `print("Hello, Python!")`
 };
 
-export default function CodeEditor({ initialCode = {}, language = 'html' }) {
+export default function CodeEditor({ initialCode = {}, language = 'html', expectedOutput = '' }) {
     const { theme } = useSelector((state) => state.theme);
     const outputRef = useRef(null);
 
@@ -36,6 +36,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html' }) {
     const [isRunning, setIsRunning] = useState(false);
     const [runError, setRunError] = useState(null);
     const [showOutputPanel, setShowOutputPanel] = useState(true);
+    const [showAnswer, setShowAnswer] = useState(false);
 
     const handleCodeChange = (newCode) => {
         setCodes(prevCodes => ({
@@ -193,6 +194,21 @@ export default function CodeEditor({ initialCode = {}, language = 'html' }) {
                             <FaRedo className="mr-2 h-4 w-4" /> Reset
                         </Button>
                     </motion.div>
+                    {expectedOutput && (
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <Button outline gradientDuoTone="greenToBlue" onClick={() => setShowAnswer(!showAnswer)}>
+                                {showAnswer ? (
+                                    <FaEyeSlash className="mr-2 h-4 w-4" />
+                                ) : (
+                                    <FaEye className="mr-2 h-4 w-4" />
+                                )}
+                                {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                            </Button>
+                        </motion.div>
+                    )}
                 </div>
             </div>
             <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
@@ -291,6 +307,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html' }) {
                                         </div>
                                     )}
                                 </div>
+                                {showAnswer && expectedOutput && (
+                                    <div className="mt-2 p-2 rounded-md bg-gray-100 dark:bg-gray-700">
+                                        <h4 className="text-sm font-semibold mb-1 text-gray-700 dark:text-gray-300">Expected Output</h4>
+                                        <pre className="whitespace-pre-wrap text-xs text-gray-800 dark:text-gray-200">{expectedOutput}</pre>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     </AnimatePresence>

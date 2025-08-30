@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import CodeEditor from '../components/CodeEditor';
-import { Alert, Button } from 'flowbite-react';
-import { FaExternalLinkAlt } from 'react-icons/fa';
+import { Alert } from 'flowbite-react';
 
 export default function TryItPage() {
     const location = useLocation();
-    const { code, language } = location.state || { code: null, language: null };
-    const [editorCode, setEditorCode] = useState(code || '');
-    const [editorLanguage, setEditorLanguage] = useState(language || 'javascript');
+    const searchParams = new URLSearchParams(location.search);
+    const stateCode = location.state?.code;
+    const stateLanguage = location.state?.language;
+    const stateExpected = location.state?.expectedOutput;
+    const queryCode = searchParams.get('code');
+    const queryLanguage = searchParams.get('language');
+    const queryExpected = searchParams.get('expectedOutput');
+
+    const initialCode = stateCode || (queryCode ? decodeURIComponent(queryCode) : null);
+    const initialLanguage = stateLanguage || queryLanguage || 'javascript';
+    const initialExpected = stateExpected || (queryExpected ? decodeURIComponent(queryExpected) : '');
+
+    const [editorCode, setEditorCode] = useState(initialCode || '');
+    const [editorLanguage, setEditorLanguage] = useState(initialLanguage || 'javascript');
+    const [expectedOutput] = useState(initialExpected);
 
     // Default message when there's no initial code
     const defaultCodeMessage = `// Welcome to the live code editor!
@@ -18,14 +29,14 @@ export default function TryItPage() {
 
     useEffect(() => {
         // Set the initial code based on the language, or a default message if none is provided.
-        if (!code && !language) {
+        if (!initialCode) {
             setEditorCode(defaultCodeMessage);
             setEditorLanguage('javascript');
         } else {
-            setEditorCode(code);
-            setEditorLanguage(language);
+            setEditorCode(initialCode);
+            setEditorLanguage(initialLanguage || 'javascript');
         }
-    }, [code, language]);
+    }, [initialCode, initialLanguage]);
 
     return (
         <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
@@ -44,8 +55,9 @@ export default function TryItPage() {
                 </Alert>
 
                 <CodeEditor
-                    initialCode={editorCode}
+                    initialCode={{ [editorLanguage]: editorCode }}
                     language={editorLanguage}
+                    expectedOutput={expectedOutput}
                 />
             </div>
         </div>

@@ -89,8 +89,9 @@ const ChapterContent = ({ activeChapter, sanitizedContent, parserOptions }) => {
                     <h3 className='text-xl font-semibold mb-3 flex items-center gap-2'><FaCode /> Try it yourself!</h3>
                     <div className='post-content tiptap mb-4' dangerouslySetInnerHTML={{ __html: sanitizedContent }} />
                     <CodeEditor
-                        initialCode={activeChapter.initialCode || ''}
+                        initialCode={{ [activeChapter.codeLanguage || 'html']: activeChapter.initialCode || '' }}
                         language={activeChapter.codeLanguage || 'html'}
+                        expectedOutput={activeChapter.expectedOutput || ''}
                     />
                 </motion.div>
             );
