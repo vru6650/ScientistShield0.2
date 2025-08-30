@@ -89,7 +89,7 @@ const DraggableChapter = ({
                         <TiptapEditor
                             content={chapter.content || ''}
                             onChange={(newContent) => handleChapterContentChange(index, newContent)}
-                            placeholder="Start writing your chapter content here..."
+                            placeholder="Start writing or use the toolbar to embed a YouTube video..."
                         />
                     </div>
                 );
@@ -100,7 +100,7 @@ const DraggableChapter = ({
                         <TiptapEditor
                             content={chapter.content || ''}
                             onChange={(newContent) => handleChapterContentChange(index, newContent)}
-                            placeholder="Embed a video via the toolbar or paste embed code..."
+                            placeholder="Paste a YouTube link or use the toolbar to embed a video..."
                         />
                     </div>
                 );
