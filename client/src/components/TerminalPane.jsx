@@ -23,7 +23,9 @@ export default function TerminalPane({
                 ? { background: '#1f2937', foreground: '#f3f4f6' }
                 : { background: '#ffffff', foreground: '#1f2937' },
         });
-        terminalRef.current.open(containerRef.current);
+        if (containerRef.current) {
+            terminalRef.current.open(containerRef.current);
+        }
         return () => terminalRef.current.dispose();
     }, []);
 
@@ -80,16 +82,18 @@ export default function TerminalPane({
                     </Button>
                 </div>
             </div>
-            {isOpen && (
-                <div className="flex-1 relative rounded-md overflow-hidden bg-white dark:bg-gray-800">
-                    <div ref={containerRef} className="absolute inset-0" />
-                    {isRunning && (
-                        <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-                            <Spinner size="sm" /> <span className="ml-2">Running...</span>
-                        </div>
-                    )}
-                </div>
-            )}
+            <div
+                className={`flex-1 relative rounded-md overflow-hidden bg-white dark:bg-gray-800 ${
+                    isOpen ? '' : 'hidden'
+                }`}
+            >
+                <div ref={containerRef} className="absolute inset-0" />
+                {isRunning && (
+                    <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                        <Spinner size="sm" /> <span className="ml-2">Running...</span>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
