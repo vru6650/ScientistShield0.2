@@ -16,6 +16,63 @@ const defaultCodes = {
     python: `print("Hello, Python!")`
 };
 
+const registerAutocompletion = (monaco) => {
+    const suggestions = {
+        javascript: [
+            {
+                label: 'log',
+                insertText: 'console.log(${1});',
+                documentation: 'Console log output',
+            },
+        ],
+        html: [
+            {
+                label: 'html:5',
+                insertText:
+                    '<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8" />\n  <title>Document</title>\n</head>\n<body>\n  $0\n</body>\n</html>',
+                documentation: 'HTML5 boilerplate',
+            },
+        ],
+        css: [
+            {
+                label: 'flex',
+                insertText: 'display: flex;\njustify-content: center;\nalign-items: center;',
+                documentation: 'Flexbox container',
+            },
+        ],
+        cpp: [
+            {
+                label: 'main',
+                insertText:
+                    '#include <iostream>\n\nint main() {\n  std::cout << "$1" << std::endl;\n  return 0;\n}',
+                documentation: 'Basic main function',
+            },
+        ],
+        python: [
+            {
+                label: 'print',
+                insertText: 'print("$1")',
+                documentation: 'Print to console',
+            },
+        ],
+    };
+
+    Object.entries(suggestions).forEach(([lang, items]) => {
+        monaco.languages.registerCompletionItemProvider(lang, {
+            provideCompletionItems: () => ({
+                suggestions: items.map((s) => ({
+                    label: s.label,
+                    kind: monaco.languages.CompletionItemKind.Snippet,
+                    insertText: s.insertText,
+                    insertTextRules:
+                        monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+                    documentation: s.documentation,
+                })),
+            }),
+        });
+    });
+};
+
 export default function CodeEditor({ initialCode = {}, language = 'html', expectedOutput = '' }) {
     const { theme } = useSelector((state) => state.theme);
     const outputRef = useRef(null);
@@ -320,6 +377,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                 <div className={`flex-1 flex flex-col rounded-md shadow-inner bg-white dark:bg-gray-800 p-2 ${isLivePreviewLanguage && showOutputPanel ? '' : 'w-full'}`}>
                     <div className="flex-1 rounded-md overflow-hidden">
                         <Editor
+                            beforeMount={registerAutocompletion}
                             height="100%"
                             language={selectedLanguage}
                             value={codes[selectedLanguage]}
@@ -335,6 +393,10 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                 folding: true,
                                 scrollbar: { vertical: 'auto', horizontal: 'auto' },
                                 padding: { top: 10, bottom: 10 },
+                                automaticLayout: true,
+                                wordWrap: 'on',
+                                tabCompletion: 'on',
+                                suggestOnTriggerCharacters: true,
                             }}
                         />
                     </div>
