@@ -109,6 +109,14 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     const [showSettings, setShowSettings] = useState(false);
     const [editorWidth, setEditorWidth] = useState(50);
 
+    // Keep the Monaco editor theme in sync with the application theme
+    useEffect(() => {
+        setEditorOptions((prev) => ({
+            ...prev,
+            theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
+        }));
+    }, [theme]);
+
     const handleCodeChange = (newCode) => {
         setCodes(prevCodes => ({
             ...prevCodes,
