@@ -13,7 +13,7 @@ const subChapterSchema = new mongoose.Schema(
         },
         contentType: {
             type: String,
-            enum: ['text', 'code-interactive', 'quiz'],
+            enum: ['text', 'code-interactive', 'quiz', 'video'],
             default: 'text',
         },
         content: {
@@ -54,7 +54,7 @@ const tutorialChapterSchema = new mongoose.Schema(
         },
         contentType: {
             type: String,
-            enum: ['text', 'code-interactive', 'quiz'],
+            enum: ['text', 'code-interactive', 'quiz', 'video'],
             default: 'text',
         },
         content: {

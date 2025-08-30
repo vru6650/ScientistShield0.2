@@ -233,6 +233,7 @@ const NestedChapterList = ({ chapters, handleChapterFieldChange, handleChapterCo
                             onChange={(e) => handleChapterFieldChange(chapter._id, 'contentType', e.target.value)}
                         >
                             <option value='text'>Text Content</option>
+                            <option value='video'>Video Content</option>
                             <option value='code-interactive'>Interactive Code Example</option>
                             <option value='quiz'>Linked Quiz</option>
                         </Select>
@@ -241,6 +242,13 @@ const NestedChapterList = ({ chapters, handleChapterFieldChange, handleChapterCo
                             <TiptapEditor
                                 content={chapter.content}
                                 onChange={html => handleChapterContentChange(chapter._id, html)}
+                            />
+                        )}
+                        {chapter.contentType === 'video' && (
+                            <TiptapEditor
+                                content={chapter.content}
+                                onChange={html => handleChapterContentChange(chapter._id, html)}
+                                placeholder='Embed a video via the toolbar or paste HTML code'
                             />
                         )}
                         {chapter.contentType === 'code-interactive' && (
@@ -444,9 +452,10 @@ export default function CreateTutorial() {
                 dispatch({ type: 'PUBLISH_ERROR', payload: `Chapter with slug '${chapter.chapterSlug}': Title is required.` });
                 return false;
             }
-            if (chapter.contentType === 'text' || chapter.contentType === 'code-interactive') {
-                if (chapter.contentType === 'text' && (!chapter.content || chapter.content.replace(/<(.|\n)*?>/g, '').trim().length === 0)) {
-                    dispatch({ type: 'PUBLISH_ERROR', payload: `Chapter with title '${chapter.chapterTitle}': Text content cannot be empty for 'Text Content' type.` });
+            if (['text', 'video'].includes(chapter.contentType)) {
+                if (!chapter.content || chapter.content.replace(/<(.|\n)*?>/g, '').trim().length === 0) {
+                    const typeLabel = chapter.contentType === 'video' ? 'Video' : 'Text';
+                    dispatch({ type: 'PUBLISH_ERROR', payload: `Chapter with title '${chapter.chapterTitle}': ${typeLabel} content cannot be empty for '${typeLabel} Content' type.` });
                     return false;
                 }
             }

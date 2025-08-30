@@ -24,7 +24,7 @@ export interface TutorialChapter {
     chapterSlug: string;
     content: string;
     order: number;
-    contentType?: 'text' | 'code-interactive' | 'quiz'; // NEW
+    contentType?: 'text' | 'code-interactive' | 'quiz' | 'video'; // NEW
     initialCode?: string; // NEW
     expectedOutput?: string; // NEW
     quizId?: string; // NEW
