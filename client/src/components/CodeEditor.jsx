@@ -32,6 +32,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     const [selectedLanguage, setSelectedLanguage] = useState(language);
     const [srcDoc, setSrcDoc] = useState('');
     const [consoleOutput, setConsoleOutput] = useState('');
+    // Flag to automatically re-run code on changes
     const [autoRun, setAutoRun] = useState(true);
     const [isRunning, setIsRunning] = useState(false);
     const [runError, setRunError] = useState(null);
