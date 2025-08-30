@@ -160,15 +160,18 @@ export default function FooterCom() {
                                         required
                                         className="rounded-md focus:ring-accent-teal focus:border-accent-teal" // Styled input
                                     />
-                                    <Button
-                                        type="submit"
-                                        gradientDuoTone="purpleToPink"
-                                        className="w-full"
+                                    <motion.div
                                         whileHover={{ scale: 1.02 }} // Subtle button animation
                                         whileTap={{ scale: 0.98 }}
                                     >
-                                        Subscribe
-                                    </Button>
+                                        <Button
+                                            type="submit"
+                                            gradientDuoTone="purpleToPink"
+                                            className="w-full"
+                                        >
+                                            Subscribe
+                                        </Button>
+                                    </motion.div>
                                 </form>
                             </div>
                         </div>

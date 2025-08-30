@@ -14,6 +14,14 @@ const CodeSnippetSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        cpp: {
+            type: String,
+            default: '',
+        },
+        python: {
+            type: String,
+            default: '',
+        },
     },
     { timestamps: true }
 );

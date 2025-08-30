@@ -32,11 +32,14 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     const [selectedLanguage, setSelectedLanguage] = useState(language);
     const [srcDoc, setSrcDoc] = useState('');
     const [consoleOutput, setConsoleOutput] = useState('');
+    // Flag to automatically re-run code on changes
     const [autoRun, setAutoRun] = useState(true);
     const [isRunning, setIsRunning] = useState(false);
     const [runError, setRunError] = useState(null);
     const [showOutputPanel, setShowOutputPanel] = useState(true);
     const [showAnswer, setShowAnswer] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [shareMessage, setShareMessage] = useState('');
 
     const handleCodeChange = (newCode) => {
         setCodes(prevCodes => ({
@@ -120,6 +123,37 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         }
     };
 
+    const saveSnippet = async () => {
+        setIsSaving(true);
+        setShareMessage('');
+        try {
+            const res = await fetch('/api/code-snippet/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    html: codes.html,
+                    css: codes.css,
+                    js: codes.javascript,
+                    cpp: codes.cpp,
+                    python: codes.python,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.message || 'Failed to save snippet');
+            }
+            const link = `${window.location.origin}/tryit?snippetId=${data._id}&language=${selectedLanguage}`;
+            await navigator.clipboard.writeText(link);
+            setShareMessage('Link copied to clipboard!');
+        } catch (error) {
+            console.error(error);
+            setShareMessage('Failed to save snippet.');
+        } finally {
+            setIsSaving(false);
+            setTimeout(() => setShareMessage(''), 3000);
+        }
+    };
+
     const isLivePreviewLanguage = selectedLanguage === 'html' || selectedLanguage === 'css' || selectedLanguage === 'javascript';
 
     useEffect(() => {
@@ -194,6 +228,14 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             <FaRedo className="mr-2 h-4 w-4" /> Reset
                         </Button>
                     </motion.div>
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving}>
+                            <FaSave className="mr-2 h-4 w-4" /> Save & Share
+                        </Button>
+                    </motion.div>
                     {expectedOutput && (
                         <motion.div
                             whileHover={{ scale: 1.05 }}
@@ -211,6 +253,11 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                     )}
                 </div>
             </div>
+            {shareMessage && (
+                <Alert color={shareMessage.includes('Failed') ? 'failure' : 'success'} className="mb-4">
+                    {shareMessage}
+                </Alert>
+            )}
             <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
                 <div className={`flex-1 flex flex-col rounded-md shadow-inner bg-white dark:bg-gray-800 p-2 ${isLivePreviewLanguage && showOutputPanel ? '' : 'w-full'}`}>
                     <div className="flex-1 rounded-md overflow-hidden">

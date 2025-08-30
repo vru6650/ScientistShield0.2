@@ -8,8 +8,8 @@ export const createCodeSnippet = async (req, res, next) => {
     if (!req.user.isAdmin) {
         return next(errorHandler(403, 'You are not allowed to create a code snippet'));
     }
-    const { html = '', css = '', js = '' } = req.body;
-    const newSnippet = new CodeSnippet({ html, css, js });
+    const { html = '', css = '', js = '', cpp = '', python = '' } = req.body;
+    const newSnippet = new CodeSnippet({ html, css, js, cpp, python });
 
     try {
         const savedSnippet = await newSnippet.save();
@@ -29,6 +29,21 @@ export const getCodeSnippet = async (req, res, next) => {
             return next(errorHandler(404, 'Code snippet not found.'));
         }
         res.status(200).json(snippet);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Saves a code snippet and returns its ID for sharing.
+ */
+export const saveCodeSnippet = async (req, res, next) => {
+    const { html = '', css = '', js = '', cpp = '', python = '' } = req.body;
+    const newSnippet = new CodeSnippet({ html, css, js, cpp, python });
+
+    try {
+        const savedSnippet = await newSnippet.save();
+        res.status(201).json(savedSnippet);
     } catch (error) {
         next(error);
     }
