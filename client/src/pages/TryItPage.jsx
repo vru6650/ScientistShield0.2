@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useLocation } from 'react-router-dom';
 import CodeEditor from '../components/CodeEditor';
 import { Alert } from 'flowbite-react';
+import useCodeSnippet from '../hooks/useCodeSnippet';
 
 export default function TryItPage() {
     const location = useLocation();
@@ -12,14 +13,11 @@ export default function TryItPage() {
     const queryCode = searchParams.get('code');
     const queryLanguage = searchParams.get('language');
     const queryExpected = searchParams.get('expectedOutput');
+    const snippetId = searchParams.get('snippetId');
 
-    const initialCode = stateCode || (queryCode ? decodeURIComponent(queryCode) : null);
-    const initialLanguage = stateLanguage || queryLanguage || 'javascript';
+    const { snippet, isLoading, error } = useCodeSnippet(snippetId);
+
     const initialExpected = stateExpected || (queryExpected ? decodeURIComponent(queryExpected) : '');
-
-    const [editorCode, setEditorCode] = useState(initialCode || '');
-    const [editorLanguage, setEditorLanguage] = useState(initialLanguage || 'javascript');
-    const [expectedOutput] = useState(initialExpected);
 
     // Default message when there's no initial code
     const defaultCodeMessage = `// Welcome to the live code editor!
@@ -27,16 +25,39 @@ export default function TryItPage() {
 // Enjoy experimenting with your code!
 `;
 
-    useEffect(() => {
-        // Set the initial code based on the language, or a default message if none is provided.
-        if (!initialCode) {
-            setEditorCode(defaultCodeMessage);
-            setEditorLanguage('javascript');
-        } else {
-            setEditorCode(initialCode);
-            setEditorLanguage(initialLanguage || 'javascript');
+    let initialLanguage;
+    let initialCodeObj;
+
+    if (snippetId) {
+        if (isLoading || !snippet) {
+            return (
+                <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+                    <div className="max-w-6xl mx-auto">Loading...</div>
+                </div>
+            );
         }
-    }, [initialCode, initialLanguage]);
+        if (error) {
+            return (
+                <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+                    <div className="max-w-6xl mx-auto">{error}</div>
+                </div>
+            );
+        }
+        initialLanguage = queryLanguage || 'javascript';
+        initialCodeObj = {
+            html: snippet.html || '',
+            css: snippet.css || '',
+            javascript: snippet.js || '',
+            cpp: snippet.cpp || '',
+            python: snippet.python || '',
+        };
+    } else {
+        const initialCode = stateCode || (queryCode ? decodeURIComponent(queryCode) : null);
+        initialLanguage = stateLanguage || queryLanguage || 'javascript';
+        initialCodeObj = {
+            [initialLanguage]: initialCode || defaultCodeMessage,
+        };
+    }
 
     return (
         <div className="min-h-screen p-6 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
@@ -55,9 +76,10 @@ export default function TryItPage() {
                 </Alert>
 
                 <CodeEditor
-                    initialCode={{ [editorLanguage]: editorCode }}
-                    language={editorLanguage}
-                    expectedOutput={expectedOutput}
+                    key={snippetId || initialLanguage}
+                    initialCode={initialCodeObj}
+                    language={initialLanguage}
+                    expectedOutput={initialExpected}
                 />
             </div>
         </div>
