@@ -1,12 +1,13 @@
 // client/src/components/CodeEditor.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import { Button, ToggleSwitch, Spinner, Alert, Select } from 'flowbite-react';
+import { Button, ToggleSwitch, Alert, Select } from 'flowbite-react';
 import { useSelector } from 'react-redux';
 import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import LanguageSelector from './LanguageSelector';
+import TerminalPane from './TerminalPane';
 
 const defaultCodes = {
     html: `<!DOCTYPE html>\n<html>\n<body>\n\n  <h1>Try It Yourself</h1>\n  <p>Edit the code below and see the output.</p>\n\n</body>\n</html>`,
@@ -75,7 +76,6 @@ const registerAutocompletion = (monaco) => {
 
 export default function CodeEditor({ initialCode = {}, language = 'html', expectedOutput = '' }) {
     const { theme } = useSelector((state) => state.theme);
-    const outputRef = useRef(null);
 
     // Consolidated state for all code snippets
     const [codes, setCodes] = useState({
@@ -462,26 +462,28 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             className="flex flex-col flex-1"
                         >
                             <div className="flex flex-col flex-1 rounded-md shadow-inner bg-white dark:bg-gray-800 p-2">
-                                <div className="flex justify-between items-center mb-1">
-                                    <h3 className="block text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                                        <FaTerminal />
-                                        {isLivePreviewLanguage ? 'Live Output' : 'Terminal'}
-                                    </h3>
-                                    <motion.div
-                                        whileHover={{ scale: 1.1 }}
-                                        whileTap={{ scale: 0.9 }}
-                                    >
-                                        <Button
-                                            size="xs"
-                                            outline
-                                            gradientDuoTone="purpleToBlue"
-                                            onClick={() => isLivePreviewLanguage && setShowOutputPanel(!showOutputPanel)}
-                                            disabled={!isLivePreviewLanguage}
+                                {isLivePreviewLanguage && (
+                                    <div className="flex justify-between items-center mb-1">
+                                        <h3 className="block text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                                            <FaTerminal />
+                                            {isLivePreviewLanguage ? 'Live Output' : 'Terminal'}
+                                        </h3>
+                                        <motion.div
+                                            whileHover={{ scale: 1.1 }}
+                                            whileTap={{ scale: 0.9 }}
                                         >
-                                            {showOutputPanel ? <FaChevronDown /> : <FaChevronRight />}
-                                        </Button>
-                                    </motion.div>
-                                </div>
+                                            <Button
+                                                size="xs"
+                                                outline
+                                                gradientDuoTone="purpleToBlue"
+                                                onClick={() => isLivePreviewLanguage && setShowOutputPanel(!showOutputPanel)}
+                                                disabled={!isLivePreviewLanguage}
+                                            >
+                                                {showOutputPanel ? <FaChevronDown /> : <FaChevronRight />}
+                                            </Button>
+                                        </motion.div>
+                                    </div>
+                                )}
                                 <div className="flex-1 rounded-md overflow-hidden bg-white dark:bg-gray-800">
                                     {isLivePreviewLanguage ? (
                                         <div className="flex flex-col h-full">
@@ -492,92 +494,29 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                                 className="w-full flex-1 bg-white dark:bg-gray-800 border-none"
                                             />
                                             {selectedLanguage === 'javascript' && (
-                                                <div
-                                                    ref={outputRef}
-                                                    className='whitespace-pre-wrap p-2 text-sm text-green-400 font-mono h-40 overflow-auto bg-gray-900 mt-2'
-                                                >
-                                                    <AnimatePresence mode="wait">
-                                                        {isRunning ? (
-                                                            <motion.div
-                                                                key="running"
-                                                                initial={{ opacity: 0 }}
-                                                                animate={{ opacity: 1 }}
-                                                                exit={{ opacity: 0 }}
-                                                                className="flex items-center text-gray-400"
-                                                            >
-                                                                <Spinner size="sm" /> <span className="ml-2">Running...</span>
-                                                            </motion.div>
-                                                        ) : (
-                                                            runError ? (
-                                                                <motion.div
-                                                                    key="error"
-                                                                    initial={{ opacity: 0 }}
-                                                                    animate={{ opacity: 1 }}
-                                                                    exit={{ opacity: 0 }}
-                                                                >
-                                                                    <Alert color="failure" className="!bg-transparent text-sm">
-                                                                        <pre className="whitespace-pre-wrap text-red-400 font-mono">
-                                                                            {runError}
-                                                                        </pre>
-                                                                    </Alert>
-                                                                </motion.div>
-                                                            ) : (
-                                                                <motion.pre
-                                                                    key="output"
-                                                                    initial={{ opacity: 0 }}
-                                                                    animate={{ opacity: 1 }}
-                                                                    exit={{ opacity: 0 }}
-                                                                    className="whitespace-pre-wrap text-sm text-green-400 font-mono"
-                                                                >
-                                                                    {consoleOutput || 'Execution complete.'}
-                                                                </motion.pre>
-                                                            )
-                                                        )}
-                                                    </AnimatePresence>
-                                                </div>
+                                                <TerminalPane
+                                                    output={consoleOutput || 'Execution complete.'}
+                                                    error={runError || ''}
+                                                    isRunning={isRunning}
+                                                    theme={theme}
+                                                    onClear={() => {
+                                                        setConsoleOutput('');
+                                                        setRunError(null);
+                                                    }}
+                                                />
                                             )}
                                         </div>
                                     ) : (
-                                        <div ref={outputRef} className='whitespace-pre-wrap p-2 text-sm text-green-400 font-mono h-full overflow-auto bg-gray-900'>
-                                            <AnimatePresence mode="wait">
-                                                {isRunning ? (
-                                                    <motion.div
-                                                        key="running"
-                                                        initial={{ opacity: 0 }}
-                                                        animate={{ opacity: 1 }}
-                                                        exit={{ opacity: 0 }}
-                                                        className="flex items-center text-gray-400"
-                                                    >
-                                                        <Spinner size="sm" /> <span className="ml-2">Running...</span>
-                                                    </motion.div>
-                                                ) : (
-                                                    runError ? (
-                                                        <motion.div
-                                                            key="error"
-                                                            initial={{ opacity: 0 }}
-                                                            animate={{ opacity: 1 }}
-                                                            exit={{ opacity: 0 }}
-                                                        >
-                                                            <Alert color="failure" className="!bg-transparent text-sm">
-                                                                <pre className="whitespace-pre-wrap text-red-400 font-mono">
-                                                                    {runError}
-                                                                </pre>
-                                                            </Alert>
-                                                        </motion.div>
-                                                    ) : (
-                                                        <motion.pre
-                                                            key="output"
-                                                            initial={{ opacity: 0 }}
-                                                            animate={{ opacity: 1 }}
-                                                            exit={{ opacity: 0 }}
-                                                            className="whitespace-pre-wrap text-sm text-green-400 font-mono"
-                                                        >
-                                                            {consoleOutput || 'Execution complete.'}
-                                                        </motion.pre>
-                                                    )
-                                                )}
-                                            </AnimatePresence>
-                                        </div>
+                                        <TerminalPane
+                                            output={consoleOutput || 'Execution complete.'}
+                                            error={runError || ''}
+                                            isRunning={isRunning}
+                                            theme={theme}
+                                            onClear={() => {
+                                                setConsoleOutput('');
+                                                setRunError(null);
+                                            }}
+                                        />
                                     )}
                                 </div>
                                 {showAnswer && expectedOutput && (
