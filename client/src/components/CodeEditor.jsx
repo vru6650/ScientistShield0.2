@@ -1,7 +1,7 @@
 // client/src/components/CodeEditor.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Button, ToggleSwitch, Spinner, Alert } from 'flowbite-react';
+import { Button, ToggleSwitch, Spinner, Alert, Select } from 'flowbite-react';
 import { useSelector } from 'react-redux';
 import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,11 +41,24 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     const [isSaving, setIsSaving] = useState(false);
     const [shareMessage, setShareMessage] = useState('');
 
+    // Editor appearance and behavior options
+    const [editorOptions, setEditorOptions] = useState({
+        fontSize: 14,
+        wordWrap: true,
+        minimap: false,
+        lineNumbers: true,
+    });
+    const [showSettings, setShowSettings] = useState(false);
+
     const handleCodeChange = (newCode) => {
         setCodes(prevCodes => ({
             ...prevCodes,
             [selectedLanguage]: newCode
         }));
+    };
+
+    const toggleOption = (option) => {
+        setEditorOptions(prev => ({ ...prev, [option]: !prev[option] }));
     };
 
     const runCode = async () => {
@@ -207,6 +220,51 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             <ToggleSwitch checked={autoRun} onChange={() => setAutoRun(!autoRun)} label="Auto-Run" className="text-sm font-medium" />
                         </div>
                     )}
+                    <div className="relative">
+                        <motion.div
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                        >
+                            <Button outline gradientDuoTone="purpleToBlue" onClick={() => setShowSettings(!showSettings)}>
+                                Editor Settings
+                            </Button>
+                        </motion.div>
+                        {showSettings && (
+                            <div className="absolute right-0 mt-2 w-56 z-50 p-3 bg-white dark:bg-gray-800 rounded-md shadow-lg space-y-2">
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Font Size</label>
+                                    <Select
+                                        size="sm"
+                                        value={editorOptions.fontSize}
+                                        onChange={(e) => setEditorOptions({ ...editorOptions, fontSize: Number(e.target.value) })}
+                                    >
+                                        <option value={12}>12</option>
+                                        <option value={14}>14</option>
+                                        <option value={16}>16</option>
+                                        <option value={18}>18</option>
+                                    </Select>
+                                </div>
+                                <ToggleSwitch
+                                    checked={editorOptions.wordWrap}
+                                    onChange={() => toggleOption('wordWrap')}
+                                    label="Word Wrap"
+                                    className="text-sm"
+                                />
+                                <ToggleSwitch
+                                    checked={editorOptions.minimap}
+                                    onChange={() => toggleOption('minimap')}
+                                    label="Minimap"
+                                    className="text-sm"
+                                />
+                                <ToggleSwitch
+                                    checked={editorOptions.lineNumbers}
+                                    onChange={() => toggleOption('lineNumbers')}
+                                    label="Line Numbers"
+                                    className="text-sm"
+                                />
+                            </div>
+                        )}
+                    </div>
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -268,8 +326,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             theme={theme === 'dark' ? 'vs-dark' : 'vs-light'}
                             onChange={handleCodeChange}
                             options={{
-                                minimap: { enabled: false },
-                                fontSize: 14,
+                                minimap: { enabled: editorOptions.minimap },
+                                fontSize: editorOptions.fontSize,
+                                lineNumbers: editorOptions.lineNumbers ? 'on' : 'off',
+                                wordWrap: editorOptions.wordWrap ? 'on' : 'off',
+                                smoothScrolling: true,
+                                automaticLayout: true,
                                 folding: true,
                                 scrollbar: { vertical: 'auto', horizontal: 'auto' },
                                 padding: { top: 10, bottom: 10 },
