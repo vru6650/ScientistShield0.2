@@ -41,8 +41,14 @@ ScientistShieldOne is a MERN-stack application for sharing knowledge and practic
    npm start
    ```
 
+## Managing Tutorials
+- `GET /api/tutorial/gettutorials` – list all tutorials.
+- `GET /api/tutorial/getsingleTutorial/:tutorialSlug` – fetch a tutorial by slug.
+- `POST /api/tutorial/create/:userId` – create a new tutorial (requires auth).
+- `PUT /api/tutorial/update/:tutorialId/:userId` – update an existing tutorial.
+- `DELETE /api/tutorial/delete/:tutorialId/:userId` – remove a tutorial.
+
 ## Contribution Guidelines
 1. Fork the repository and create a new branch for your feature or fix.
 2. Make your changes and run any available tests (`npm test`).
-3. Commit your changes with a clear message and open a pull request.# ScientistShield_0.1
-# ScientistShield0.2
+3. Commit your changes with a clear message and open a pull request.

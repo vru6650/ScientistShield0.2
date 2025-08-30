@@ -38,8 +38,11 @@ const TutorialCard = ({ tutorial }) => {
         ["-10px 10px 20px rgba(0,0,0,0.2)", "10px 10px 20px rgba(0,0,0,0.2)"]
     ), { stiffness: 300, damping: 10 });
 
-    // FIX: Safely access tutorial.content and use a default value if it's undefined
-    const readingTime = Math.ceil((tutorial.content?.length || 0) / 1000) || 5;
+    // Estimate reading time based on a ~200 wpm average
+    const wordCount = tutorial.content
+        ? tutorial.content.replace(/<[^>]+>/g, '').trim().split(/\s+/).length
+        : 0;
+    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
 
     return (
         <Link to={`/tutorials/${tutorial.slug}`} className="block h-full">
