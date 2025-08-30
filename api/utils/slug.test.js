@@ -12,6 +12,11 @@ test('generateSlug removes non-alphanumeric characters', () => {
     assert.strictEqual(slug, 'react-nodejs-basics');
 });
 
+test('generateSlug converts underscores to hyphens', () => {
+    const slug = generateSlug('Hello_world_again');
+    assert.strictEqual(slug, 'hello-world-again');
+});
+
 test('generateSlug collapses whitespace and trims hyphens', () => {
     const slug = generateSlug('  Multiple   Spaces -- and symbols!!!  ');
     assert.strictEqual(slug, 'multiple-spaces-and-symbols');
