@@ -144,7 +144,7 @@ const ChapterContent = ({ activeChapter, sanitizedContent, parserOptions }) => {
 };
 
 const ChapterLink = ({ chapter, tutorial, activeChapterId, currentUser }) => {
-    const isCompleted = currentUser && chapter.completedBy?.includes(currentUser._id);
+    const isCompleted = currentUser && chapter.completedBy?.some(id => id.toString() === currentUser._id);
     const isActive = activeChapterId === chapter._id;
 
     const Icon =
@@ -302,7 +302,7 @@ export default function SingleTutorialPage() {
     const countCompletedChapters = (chapters) => {
         if (!chapters) return 0;
         return chapters.reduce((count, chapter) => {
-            const isCompleted = chapter.completedBy?.includes(currentUser._id);
+            const isCompleted = chapter.completedBy?.some(id => id.toString() === currentUser._id);
             const subChapterCount = chapter.subChapters ? countCompletedChapters(chapter.subChapters) : 0;
             return count + (isCompleted ? 1 : 0) + subChapterCount;
         }, 0);
@@ -318,7 +318,7 @@ export default function SingleTutorialPage() {
 
     useEffect(() => {
         if (activeChapter && currentUser) {
-            const completed = activeChapter.completedBy && activeChapter.completedBy.includes(currentUser._id);
+            const completed = activeChapter.completedBy && activeChapter.completedBy.some(id => id.toString() === currentUser._id);
             setIsCompleted(completed);
         } else { setIsCompleted(false); }
     }, [activeChapter, currentUser]);
