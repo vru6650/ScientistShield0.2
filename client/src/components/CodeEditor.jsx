@@ -484,12 +484,59 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                 </div>
                                 <div className="flex-1 rounded-md overflow-hidden bg-white dark:bg-gray-800">
                                     {isLivePreviewLanguage ? (
-                                        <iframe
-                                            title="live-output"
-                                            srcDoc={srcDoc}
-                                            sandbox="allow-scripts allow-modals allow-forms allow-popups allow-same-origin"
-                                            className="w-full h-full bg-white dark:bg-gray-800 border-none"
-                                        />
+                                        <div className="flex flex-col h-full">
+                                            <iframe
+                                                title="live-output"
+                                                srcDoc={srcDoc}
+                                                sandbox="allow-scripts allow-modals allow-forms allow-popups allow-same-origin"
+                                                className="w-full flex-1 bg-white dark:bg-gray-800 border-none"
+                                            />
+                                            {selectedLanguage === 'javascript' && (
+                                                <div
+                                                    ref={outputRef}
+                                                    className='whitespace-pre-wrap p-2 text-sm text-green-400 font-mono h-40 overflow-auto bg-gray-900 mt-2'
+                                                >
+                                                    <AnimatePresence mode="wait">
+                                                        {isRunning ? (
+                                                            <motion.div
+                                                                key="running"
+                                                                initial={{ opacity: 0 }}
+                                                                animate={{ opacity: 1 }}
+                                                                exit={{ opacity: 0 }}
+                                                                className="flex items-center text-gray-400"
+                                                            >
+                                                                <Spinner size="sm" /> <span className="ml-2">Running...</span>
+                                                            </motion.div>
+                                                        ) : (
+                                                            runError ? (
+                                                                <motion.div
+                                                                    key="error"
+                                                                    initial={{ opacity: 0 }}
+                                                                    animate={{ opacity: 1 }}
+                                                                    exit={{ opacity: 0 }}
+                                                                >
+                                                                    <Alert color="failure" className="!bg-transparent text-sm">
+                                                                        <pre className="whitespace-pre-wrap text-red-400 font-mono">
+                                                                            {runError}
+                                                                        </pre>
+                                                                    </Alert>
+                                                                </motion.div>
+                                                            ) : (
+                                                                <motion.pre
+                                                                    key="output"
+                                                                    initial={{ opacity: 0 }}
+                                                                    animate={{ opacity: 1 }}
+                                                                    exit={{ opacity: 0 }}
+                                                                    className="whitespace-pre-wrap text-sm text-green-400 font-mono"
+                                                                >
+                                                                    {consoleOutput || 'Execution complete.'}
+                                                                </motion.pre>
+                                                            )
+                                                        )}
+                                                    </AnimatePresence>
+                                                </div>
+                                            )}
+                                        </div>
                                     ) : (
                                         <div ref={outputRef} className='whitespace-pre-wrap p-2 text-sm text-green-400 font-mono h-full overflow-auto bg-gray-900'>
                                             <AnimatePresence mode="wait">
