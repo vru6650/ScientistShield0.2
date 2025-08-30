@@ -592,6 +592,11 @@ export default function CreateTutorial() {
                             transition={{ duration: 0.5 }}
                         >
                             <h2 className="text-2xl font-bold mt-8 mb-4 text-gray-900 dark:text-white">Step 2: Tutorial Chapters</h2>
+                            <Alert color="purple" className="mb-4">
+                                <span className="font-semibold">Pro tip:</span> Include a chapter with content type
+                                <span className="font-semibold"> Linked Quiz</span> at the end of each major section to
+                                reinforce what your learners just covered.
+                            </Alert>
                             {state.formData.chapters.length === 0 && (
                                 <Alert color="info" className="animate-fade-in">
                                     <span className="font-semibold">Heads up!</span> No chapters added yet. Click "Add New Chapter" to get started!
