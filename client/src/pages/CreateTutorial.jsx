@@ -242,13 +242,14 @@ const NestedChapterList = ({ chapters, handleChapterFieldChange, handleChapterCo
                             <TiptapEditor
                                 content={chapter.content}
                                 onChange={html => handleChapterContentChange(chapter._id, html)}
+                                placeholder='Write text or embed a YouTube link via the toolbar'
                             />
                         )}
                         {chapter.contentType === 'video' && (
                             <TiptapEditor
                                 content={chapter.content}
                                 onChange={html => handleChapterContentChange(chapter._id, html)}
-                                placeholder='Embed a video via the toolbar or paste HTML code'
+                                placeholder='Paste a YouTube link or use the toolbar to embed a video'
                             />
                         )}
                         {chapter.contentType === 'code-interactive' && (
