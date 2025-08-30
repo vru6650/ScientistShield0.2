@@ -4,6 +4,7 @@
  * The function performs the following operations:
  * - trims surrounding whitespace
  * - converts all characters to lower case
+ * - converts underscores to hyphens
  * - removes any character that is not alphanumeric, a space or a hyphen
  * - replaces consecutive whitespace characters with a single hyphen
  * - collapses multiple hyphens into one
@@ -24,6 +25,8 @@ export function generateSlug(title) {
 
     return trimmed
         .toLowerCase()
+        // Treat underscores as hyphens for word separation
+        .replace(/_/g, '-')
         // Remove all characters except letters, numbers, spaces and hyphens
         .replace(/[^a-z0-9\s-]/g, '')
         // Convert remaining whitespace to hyphens
