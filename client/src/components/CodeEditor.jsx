@@ -107,6 +107,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
     });
     const [showSettings, setShowSettings] = useState(false);
+    const [editorWidth, setEditorWidth] = useState(50);
 
     const handleCodeChange = (newCode) => {
         setCodes(prevCodes => ({
@@ -345,6 +346,19 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             </div>
                         )}
                     </div>
+                    {isLivePreviewLanguage && showOutputPanel && (
+                        <div className="flex items-center gap-2 w-32">
+                            <label className="text-xs font-medium text-gray-700 dark:text-gray-200">Width</label>
+                            <input
+                                type="range"
+                                min="30"
+                                max="70"
+                                value={editorWidth}
+                                onChange={(e) => setEditorWidth(Number(e.target.value))}
+                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                            />
+                        </div>
+                    )}
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -397,7 +411,10 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                 </Alert>
             )}
             <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden">
-                <div className={`flex-1 flex flex-col rounded-md shadow-inner bg-white dark:bg-gray-800 p-2 ${isLivePreviewLanguage && showOutputPanel ? '' : 'w-full'}`}>
+                <div
+                    className="flex-1 flex flex-col rounded-md shadow-inner bg-white dark:bg-gray-800 p-2"
+                    style={{ width: showOutputPanel ? `${editorWidth}%` : '100%' }}
+                >
                     <div className="flex-1 rounded-md overflow-hidden">
                         <Editor
                             beforeMount={registerAutocompletion}
@@ -423,7 +440,10 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                     </div>
                 </div>
 
-                <div className={`flex-1 flex flex-col gap-4 transition-all duration-300 ${isLivePreviewLanguage && !showOutputPanel ? 'hidden' : 'block'}`}>
+                <div
+                    className={`flex-1 flex flex-col gap-4 transition-all duration-300 ${isLivePreviewLanguage && !showOutputPanel ? 'hidden' : ''}`}
+                    style={{ width: showOutputPanel ? `${100 - editorWidth}%` : '100%' }}
+                >
                     <AnimatePresence mode="wait">
                         <motion.div
                             key={isLivePreviewLanguage ? 'live' : 'console'}
@@ -443,7 +463,13 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                         whileHover={{ scale: 1.1 }}
                                         whileTap={{ scale: 0.9 }}
                                     >
-                                        <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={() => setShowOutputPanel(!showOutputPanel)}>
+                                        <Button
+                                            size="xs"
+                                            outline
+                                            gradientDuoTone="purpleToBlue"
+                                            onClick={() => isLivePreviewLanguage && setShowOutputPanel(!showOutputPanel)}
+                                            disabled={!isLivePreviewLanguage}
+                                        >
                                             {showOutputPanel ? <FaChevronDown /> : <FaChevronRight />}
                                         </Button>
                                     </motion.div>
