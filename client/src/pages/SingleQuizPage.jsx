@@ -1,5 +1,5 @@
 // client/src/pages/SingleQuizPage.jsx
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Helmet } from 'react-helmet-async';
 import { Spinner, Alert } from 'flowbite-react';
@@ -69,11 +69,47 @@ export default function SingleQuizPage() {
                 <p className="text-xl text-gray-600 dark:text-gray-400 text-center max-w-4xl mx-auto mb-12 font-light">
                     {quiz.description}
                 </p>
+                {quiz.relatedTutorials && quiz.relatedTutorials.length > 0 && (
+                    <div className="mb-12 text-center">
+                        <h2 className="text-2xl font-semibold mb-4">Review the related tutorials before you begin:</h2>
+                        <ul className="flex flex-wrap justify-center gap-4">
+                            {quiz.relatedTutorials.map((tutorial) => (
+                                <li key={tutorial.slug}>
+                                    <Link
+                                        to={`/tutorials/${tutorial.slug}`}
+                                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                                    >
+                                        {tutorial.title}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
 
                 {/* The main quiz logic is handled by the reusable QuizComponent */}
                 <div className="max-w-4xl mx-auto mt-8">
                     <QuizComponent quizId={quiz._id} />
                 </div>
+
+                {quiz.relatedTutorials && quiz.relatedTutorials.length > 0 && (
+                    <div className="max-w-4xl mx-auto mt-12 p-6 bg-blue-50 dark:bg-gray-800 rounded-lg text-gray-800 dark:text-gray-200">
+                        <h2 className="text-2xl font-bold mb-4 text-center">Struggling with the quiz?</h2>
+                        <p className="mb-4 text-center">Refresh your knowledge with these tutorials:</p>
+                        <ul className="list-disc pl-6 space-y-2">
+                            {quiz.relatedTutorials.map((tutorial) => (
+                                <li key={`bottom-${tutorial.slug}`}>
+                                    <Link
+                                        to={`/tutorials/${tutorial.slug}`}
+                                        className="text-blue-600 dark:text-blue-400 hover:underline"
+                                    >
+                                        {tutorial.title}
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
         </>
     );
