@@ -104,6 +104,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         wordWrap: true,
         minimap: false,
         lineNumbers: true,
+        theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
     });
     const [showSettings, setShowSettings] = useState(false);
 
@@ -293,12 +294,34 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                     <Select
                                         size="sm"
                                         value={editorOptions.fontSize}
-                                        onChange={(e) => setEditorOptions({ ...editorOptions, fontSize: Number(e.target.value) })}
+                                        onChange={(e) =>
+                                            setEditorOptions({
+                                                ...editorOptions,
+                                                fontSize: Number(e.target.value),
+                                            })
+                                        }
                                     >
                                         <option value={12}>12</option>
                                         <option value={14}>14</option>
                                         <option value={16}>16</option>
                                         <option value={18}>18</option>
+                                    </Select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Theme</label>
+                                    <Select
+                                        size="sm"
+                                        value={editorOptions.theme}
+                                        onChange={(e) =>
+                                            setEditorOptions({
+                                                ...editorOptions,
+                                                theme: e.target.value,
+                                            })
+                                        }
+                                    >
+                                        <option value="vs-light">Light</option>
+                                        <option value="vs-dark">Dark</option>
+                                        <option value="hc-black">High Contrast</option>
                                     </Select>
                                 </div>
                                 <ToggleSwitch
@@ -381,7 +404,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             height="100%"
                             language={selectedLanguage}
                             value={codes[selectedLanguage]}
-                            theme={theme === 'dark' ? 'vs-dark' : 'vs-light'}
+                            theme={editorOptions.theme}
                             onChange={handleCodeChange}
                             options={{
                                 minimap: { enabled: editorOptions.minimap },
@@ -393,8 +416,6 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                 folding: true,
                                 scrollbar: { vertical: 'auto', horizontal: 'auto' },
                                 padding: { top: 10, bottom: 10 },
-                                automaticLayout: true,
-                                wordWrap: 'on',
                                 tabCompletion: 'on',
                                 suggestOnTriggerCharacters: true,
                             }}
