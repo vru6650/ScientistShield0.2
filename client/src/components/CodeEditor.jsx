@@ -105,7 +105,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         minimap: false,
         lineNumbers: true,
     });
+    const [editorTheme, setEditorTheme] = useState(theme === 'dark' ? 'vs-dark' : 'vs-light');
     const [showSettings, setShowSettings] = useState(false);
+
+    useEffect(() => {
+        setEditorTheme(theme === 'dark' ? 'vs-dark' : 'vs-light');
+    }, [theme]);
 
     const handleCodeChange = (newCode) => {
         setCodes(prevCodes => ({
@@ -289,6 +294,18 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                         {showSettings && (
                             <div className="absolute right-0 mt-2 w-56 z-50 p-3 bg-white dark:bg-gray-800 rounded-md shadow-lg space-y-2">
                                 <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Theme</label>
+                                    <Select
+                                        size="sm"
+                                        value={editorTheme}
+                                        onChange={(e) => setEditorTheme(e.target.value)}
+                                    >
+                                        <option value="vs-light">Light</option>
+                                        <option value="vs-dark">Dark</option>
+                                        <option value="hc-black">High Contrast</option>
+                                    </Select>
+                                </div>
+                                <div>
                                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Font Size</label>
                                     <Select
                                         size="sm"
@@ -381,7 +398,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             height="100%"
                             language={selectedLanguage}
                             value={codes[selectedLanguage]}
-                            theme={theme === 'dark' ? 'vs-dark' : 'vs-light'}
+                            theme={editorTheme}
                             onChange={handleCodeChange}
                             options={{
                                 minimap: { enabled: editorOptions.minimap },
