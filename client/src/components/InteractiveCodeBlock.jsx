@@ -4,10 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from 'flowbite-react';
 import { FaPlayCircle, FaCode, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
 import CodeEditor from './CodeEditor';
-import { useNavigate } from 'react-router-dom';
 
 export default function InteractiveCodeBlock({ initialCode, language }) {
-    const navigate = useNavigate();
     const [isInteractive, setIsInteractive] = useState(false);
 
     const handleToggle = () => {
@@ -15,7 +13,8 @@ export default function InteractiveCodeBlock({ initialCode, language }) {
     };
 
     const handleOpenInNewTab = () => {
-        navigate('/tryit', { state: { code: initialCode, language: language } });
+        const url = `/tryit?code=${encodeURIComponent(initialCode)}&language=${language}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
     };
 
     const containerVariants = {
