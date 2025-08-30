@@ -24,6 +24,10 @@ const subChapterSchema = new mongoose.Schema(
             type: String,
             default: '',
         },
+        expectedOutput: {
+            type: String,
+            default: '',
+        },
         quizId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Quiz',
@@ -58,6 +62,10 @@ const tutorialChapterSchema = new mongoose.Schema(
             default: '',
         },
         initialCode: {
+            type: String,
+            default: '',
+        },
+        expectedOutput: {
             type: String,
             default: '',
         },

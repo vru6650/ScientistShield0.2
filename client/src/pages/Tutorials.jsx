@@ -6,7 +6,7 @@ import { Spinner, Alert, Button, TextInput, Select } from 'flowbite-react';
 import { motion } from 'framer-motion';
 
 import TutorialCard from '../components/TutorialCard';
-import { getTutorials } from '../services/tutorialService.js';
+import { getTutorials, getCategories } from '../services/tutorialService.js';
 import TutorialCardSkeleton from '../components/TutorialCardSkeleton'; // <-- Import the new skeleton component
 
 export default function Tutorials() {
@@ -60,17 +60,13 @@ export default function Tutorials() {
         navigate({ search: urlParams.toString() });
     };
 
-    const { data: categoriesData, isLoading: categoriesLoading, isError: categoriesError } = useQuery({
+    const {
+        data: categoriesData,
+        isLoading: categoriesLoading,
+        isError: categoriesError,
+    } = useQuery({
         queryKey: ['tutorialCategories'],
-        queryFn: async () => {
-            return new Promise(resolve => {
-                setTimeout(() => {
-                    resolve([
-                        'JavaScript', 'React.js', 'Next.js', 'CSS', 'HTML', 'Node.js', 'C++', 'Python', 'Go', 'PHP', 'TypeScript', 'Data Science', 'Machine Learning'
-                    ]);
-                }, 500);
-            });
-        },
+        queryFn: getCategories,
         staleTime: Infinity,
     });
 
@@ -100,7 +96,7 @@ export default function Tutorials() {
                 className="flex flex-col md:flex-row gap-6 mb-12 items-center justify-center bg-gray-900 p-6 rounded-xl shadow-lg border border-gray-700"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ type: "spring", stiffness: 100 }}
+                transition={{ type: 'spring', stiffness: 100 }}
             >
                 <form onSubmit={handleSearchSubmit} className="flex gap-4 w-full md:w-auto">
                     <TextInput

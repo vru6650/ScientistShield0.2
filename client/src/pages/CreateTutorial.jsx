@@ -101,9 +101,13 @@ const cleanTemporaryIds = (chapters) => {
         if (typeof cleanedChapter._id === 'string' && cleanedChapter._id.startsWith('temp-')) {
             delete cleanedChapter._id;
         }
+        if (cleanedChapter.contentType !== 'quiz' || !cleanedChapter.quizId) {
+            delete cleanedChapter.quizId;
+        }
         if (cleanedChapter.subChapters && cleanedChapter.subChapters.length > 0) {
             cleanedChapter.subChapters = cleanTemporaryIds(cleanedChapter.subChapters);
         }
+
         return cleanedChapter;
     });
 };
@@ -180,7 +184,7 @@ function tutorialReducer(state, action) {
 
 const generateSlug = (text) => {
     if (!text) return '';
-    return text.toLowerCase().trim().replace(/[\s\W-]+/g, '-').replace(/^-+|-+$/g, '');
+    return text.toLowerCase().trim().replace(/[\\s\\W-]+/g, '-').replace(/^-+|-+$/g, '');
 };
 
 const NestedChapterList = ({ chapters, handleChapterFieldChange, handleChapterContentChange, quizzesData, quizzesLoading, quizzesError, handleAddSubchapter, handleRemoveChapter }) => {
@@ -250,6 +254,12 @@ const NestedChapterList = ({ chapters, handleChapterFieldChange, handleChapterCo
                                     placeholder='Initial Code'
                                     value={chapter.initialCode}
                                     onChange={(e) => handleChapterFieldChange(chapter._id, 'initialCode', e.target.value)}
+                                />
+                                <TextInput
+                                    type='text'
+                                    placeholder='Expected Output'
+                                    value={chapter.expectedOutput || ''}
+                                    onChange={(e) => handleChapterFieldChange(chapter._id, 'expectedOutput', e.target.value)}
                                 />
                             </div>
                         )}

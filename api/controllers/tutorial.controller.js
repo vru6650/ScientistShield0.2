@@ -21,12 +21,22 @@ export const createTutorial = async (req, res, next) => {
 
     const slug = generateSlug(title);
 
-    const chaptersToSave = chapters.map(chapter => {
-        if (chapter.contentType !== 'quiz' || chapter.quizId === '') {
-            return { ...chapter, quizId: undefined };
-        }
-        return chapter;
-    });
+    const sanitizeChapters = (chapters = []) =>
+        chapters.map((chapter) => {
+            const sanitized = {
+                ...chapter,
+                quizId:
+                    chapter.contentType === 'quiz' && chapter.quizId
+                        ? chapter.quizId
+                        : undefined,
+            };
+            if (chapter.subChapters && chapter.subChapters.length > 0) {
+                sanitized.subChapters = sanitizeChapters(chapter.subChapters);
+            }
+            return sanitized;
+        });
+
+    const chaptersToSave = sanitizeChapters(chapters);
 
     const newTutorial = new Tutorial({
         title,
@@ -90,6 +100,16 @@ export const getTutorials = async (req, res, next) => {
             totalTutorials,
             lastMonthTutorials,
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Fetch distinct tutorial categories
+export const getTutorialCategories = async (req, res, next) => {
+    try {
+        const categories = await Tutorial.distinct('category');
+        res.status(200).json(categories);
     } catch (error) {
         next(error);
     }
@@ -188,11 +208,17 @@ export const updateChapter = async (req, res, next) => {
     if (!req.user.isAdmin && req.user.id !== req.params.userId) {
         return next(errorHandler(403, 'You are not allowed to update this chapter'));
     }
-    const { chapterTitle, content, order } = req.body;
+    const { chapterTitle, content, order, contentType, initialCode, expectedOutput, quizId } = req.body;
     const updateFields = {};
     if (chapterTitle !== undefined) updateFields.chapterTitle = chapterTitle;
     if (content !== undefined) updateFields.content = content;
     if (order !== undefined) updateFields.order = order;
+    if (contentType !== undefined) updateFields.contentType = contentType;
+    if (initialCode !== undefined) updateFields.initialCode = initialCode;
+    if (expectedOutput !== undefined) updateFields.expectedOutput = expectedOutput;
+    if (quizId !== undefined) {
+        updateFields.quizId = contentType === 'quiz' ? quizId : undefined;
+    }
 
     try {
         const tutorial = await Tutorial.findById(req.params.tutorialId);

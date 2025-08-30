@@ -19,6 +19,12 @@ export const getTutorials = async (searchQuery = '') => {
     return data;
 };
 
+// Fetch all distinct tutorial categories
+export const getCategories = async () => {
+    const { data } = await API.get('/api/tutorial/categories');
+    return data;
+};
+
 /**
  * Creates a new tutorial.
  * @param {object} formData - The tutorial data to create.
@@ -63,7 +69,8 @@ export const deleteTutorial = async ({ tutorialId, userId }) => {
  * @param {object} params
  * @param {string} params.tutorialId - ID of the tutorial to add the chapter to.
  * @param {string} params.userId - ID of the user performing the action.
- * @param {object} params.chapterData - The chapter data to add.
+ * @param {object} params.chapterData - The chapter data to add. Supports
+ * `expectedOutput` for code-interactive chapters.
  * @returns {Promise<import('../types').Tutorial>} The updated tutorial data with the new chapter.
  */
 export const addChapter = async ({ tutorialId, userId, chapterData }) => {
@@ -77,7 +84,8 @@ export const addChapter = async ({ tutorialId, userId, chapterData }) => {
  * @param {string} params.tutorialId - ID of the tutorial.
  * @param {string} params.chapterId - ID of the chapter to update.
  * @param {string} params.userId - ID of the user performing the action.
- * @param {object} params.chapterData - The updated chapter data.
+ * @param {object} params.chapterData - The updated chapter data. Supports
+ * `expectedOutput` for code-interactive chapters.
  * @returns {Promise<import('../types').Tutorial>} The updated tutorial data.
  */
 export const updateChapter = async ({ tutorialId, chapterId, userId, chapterData }) => {
@@ -100,6 +108,7 @@ export const deleteChapter = async ({ tutorialId, chapterId, userId }) => {
 
 export default {
     getTutorials,
+    getCategories,
     createTutorial,
     updateTutorial,
     deleteTutorial,
