@@ -34,15 +34,9 @@ const TutorialCard = ({ tutorial }) => {
     const rotateX = useSpring(useTransform(mouseY, [0, 1], [-8, 8]), { stiffness: 250, damping: 15 });
     const rotateY = useSpring(useTransform(mouseX, [0, 1], [8, -8]), { stiffness: 250, damping: 15 });
     const scale = useSpring(isHovering ? 1.05 : 1, { stiffness: 300, damping: 10 });
-    const boxShadow = useSpring(useTransform(mouseX, [0, 1],
-        ["-10px 10px 20px rgba(0,0,0,0.2)", "10px 10px 20px rgba(0,0,0,0.2)"]
-    ), { stiffness: 300, damping: 10 });
 
-    // Estimate reading time based on a ~200 wpm average
-    const wordCount = tutorial.content
-        ? tutorial.content.replace(/<[^>]+>/g, '').trim().split(/\s+/).length
-        : 0;
-    const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+    // Use pre-computed reading time from the backend
+    const readingTime = tutorial.readingTime || 1;
 
     return (
         <Link to={`/tutorials/${tutorial.slug}`} className="block h-full">
@@ -82,10 +76,15 @@ const TutorialCard = ({ tutorial }) => {
                 <div className="p-4 flex flex-col flex-grow">
                     <h2 className="text-xl font-bold line-clamp-2 text-white mb-2">{tutorial.title}</h2>
                     <p className="text-gray-400 text-sm mt-1 line-clamp-3 flex-grow">{tutorial.description}</p>
-                    <div className="mt-4">
+                    <div className="mt-4 flex flex-wrap gap-2">
                         <span className="inline-block px-3 py-1 bg-teal-600/20 text-teal-300 rounded-full text-xs font-medium uppercase tracking-wide">
                             {tutorial.category}
                         </span>
+                        {tutorial.difficulty && (
+                            <span className="inline-block px-3 py-1 bg-indigo-600/20 text-indigo-300 rounded-full text-xs font-medium uppercase tracking-wide">
+                                {tutorial.difficulty}
+                            </span>
+                        )}
                     </div>
                 </div>
             </motion.div>

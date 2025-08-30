@@ -9,11 +9,33 @@ const generateSlug = (text) => {
         .replace(/[^a-zA-Z0-9-]/g, '');
 };
 
+// Estimate reading time in minutes for a set of chapters
+const calculateReadingTime = (chapters = []) => {
+    const WORDS_PER_MINUTE = 200;
+
+    const countWords = (text = '') =>
+        text.replace(/<[^>]+>/g, '').trim().split(/\s+/).filter(Boolean).length;
+
+    const traverse = (nodes = []) => {
+        let words = 0;
+        for (const node of nodes) {
+            words += countWords(node.content);
+            if (Array.isArray(node.subChapters) && node.subChapters.length > 0) {
+                words += traverse(node.subChapters);
+            }
+        }
+        return words;
+    };
+
+    const totalWords = traverse(chapters);
+    return Math.max(1, Math.ceil(totalWords / WORDS_PER_MINUTE));
+};
+
 export const createTutorial = async (req, res, next) => {
     if (!req.user.isAdmin) {
         return next(errorHandler(403, 'You are not allowed to create a tutorial'));
     }
-    const { title, description, category, thumbnail, chapters = [] } = req.body;
+    const { title, description, category, thumbnail, chapters = [], difficulty } = req.body;
 
     if (!title || !description || !category) {
         return next(errorHandler(400, 'Please provide all required fields for the tutorial.'));
@@ -37,6 +59,7 @@ export const createTutorial = async (req, res, next) => {
         });
 
     const chaptersToSave = sanitizeChapters(chapters);
+    const readingTime = calculateReadingTime(chaptersToSave);
 
     const newTutorial = new Tutorial({
         title,
@@ -46,6 +69,8 @@ export const createTutorial = async (req, res, next) => {
         category,
         authorId: req.user.id,
         chapters: chaptersToSave,
+        difficulty,
+        readingTime,
     });
 
     try {
@@ -119,12 +144,13 @@ export const updateTutorial = async (req, res, next) => {
     if (!req.user.isAdmin && req.user.id !== req.params.userId) {
         return next(errorHandler(403, 'You are not allowed to update this tutorial'));
     }
-    const { title, description, category, thumbnail } = req.body;
+    const { title, description, category, thumbnail, difficulty } = req.body;
     const updateFields = {
         title,
         description,
         category,
         thumbnail,
+        difficulty,
     };
     if (title) {
         updateFields.slug = generateSlug(title);
@@ -196,6 +222,7 @@ export const addChapter = async (req, res, next) => {
 
         tutorial.chapters.push(chapterData);
         tutorial.chapters.sort((a, b) => a.order - b.order);
+        tutorial.readingTime = calculateReadingTime(tutorial.chapters);
         await tutorial.save();
         res.status(201).json(tutorial.chapters[tutorial.chapters.length - 1]);
     } catch (error) {
@@ -242,6 +269,7 @@ export const updateChapter = async (req, res, next) => {
         }
 
         tutorial.chapters.sort((a, b) => a.order - b.order);
+        tutorial.readingTime = calculateReadingTime(tutorial.chapters);
         await tutorial.save();
         res.status(200).json(chapter);
     } catch (error) {
@@ -260,6 +288,7 @@ export const deleteChapter = async (req, res, next) => {
         }
 
         tutorial.chapters.pull({ _id: req.params.chapterId });
+        tutorial.readingTime = calculateReadingTime(tutorial.chapters);
         await tutorial.save();
         res.status(200).json('Chapter deleted successfully');
     } catch (error) {
