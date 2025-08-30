@@ -1,19 +1,13 @@
 // client/src/components/InteractiveCodeBlock.jsx
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React from 'react';
+import { motion } from 'framer-motion';
 import { Button } from 'flowbite-react';
-import { FaPlayCircle, FaCode, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
-import CodeEditor from './CodeEditor';
+import { FaPlayCircle, FaCode } from 'react-icons/fa';
 
-export default function InteractiveCodeBlock({ initialCode, language }) {
-    const [isInteractive, setIsInteractive] = useState(false);
-
-    const handleToggle = () => {
-        setIsInteractive(!isInteractive);
-    };
-
+export default function InteractiveCodeBlock({ initialCode, language, expectedOutput = '' }) {
     const handleOpenInNewTab = () => {
-        const url = `/tryit?code=${encodeURIComponent(initialCode)}&language=${language}`;
+        const url = `/tryit?code=${encodeURIComponent(initialCode)}&language=${language}` +
+            (expectedOutput ? `&expectedOutput=${encodeURIComponent(expectedOutput)}` : '');
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
@@ -22,30 +16,14 @@ export default function InteractiveCodeBlock({ initialCode, language }) {
         visible: {
             opacity: 1,
             y: 0,
-            transition: { type: "spring", stiffness: 80, duration: 0.5 }
-        }
-    };
-
-    const contentVariants = {
-        hidden: { opacity: 0, height: 0, y: -20 },
-        visible: {
-            opacity: 1,
-            height: 'auto',
-            y: 0,
-            transition: { duration: 0.4, ease: 'easeOut' }
-        },
-        exit: {
-            opacity: 0,
-            height: 0,
-            y: -20,
-            transition: { duration: 0.3, ease: 'easeIn' }
+            transition: { type: 'spring', stiffness: 80, duration: 0.5 }
         }
     };
 
     const motionWrapperProps = {
         whileHover: { scale: 1.05 },
         whileTap: { scale: 0.95 },
-        transition: { type: "spring", stiffness: 400, damping: 10 },
+        transition: { type: 'spring', stiffness: 400, damping: 10 },
         style: { display: 'inline-block' },
     };
 
@@ -64,63 +42,20 @@ export default function InteractiveCodeBlock({ initialCode, language }) {
                     <Button
                         gradientDuoTone="purpleToBlue"
                         size="sm"
-                        onClick={handleToggle}
+                        onClick={handleOpenInNewTab}
                         className="flex items-center text-sm font-semibold rounded-lg"
                     >
-                        {isInteractive ? (
-                            <>
-                                <FaTimes className="mr-2" /> Close Editor
-                            </>
-                        ) : (
-                            <>
-                                <FaPlayCircle className="mr-2" /> Try it Yourself
-                            </>
-                        )}
+                        <FaPlayCircle className="mr-2" /> Try it Yourself
                     </Button>
                 </motion.div>
             </div>
 
-            <AnimatePresence mode="wait">
-                {isInteractive ? (
-                    <motion.div
-                        key="interactive"
-                        variants={contentVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        className="pt-6"
-                    >
-                        <CodeEditor
-                            initialCode={{ [language]: initialCode }}
-                            language={language}
-                        />
-                    </motion.div>
-                ) : (
-                    <motion.div
-                        key="static"
-                        variants={contentVariants}
-                        initial="hidden"
-                        animate="visible"
-                        exit="exit"
-                        className="pt-6"
-                    >
-                        <div className="w-full relative group">
-                            <pre className={`p-5 rounded-lg bg-gray-900 text-white language-${language} overflow-x-auto text-sm shadow-inner`}>
-                                <code dangerouslySetInnerHTML={{ __html: initialCode }} />
-                            </pre>
-                            <motion.div
-                                {...motionWrapperProps}
-                                className="absolute bottom-4 right-4 z-10"
-                            >
-                                <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={handleOpenInNewTab}>
-                                    <FaExternalLinkAlt className="mr-1" />
-                                    Open in new tab
-                                </Button>
-                            </motion.div>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            <div className="pt-6">
+                <pre className={`p-5 rounded-lg bg-gray-900 text-white language-${language} overflow-x-auto text-sm shadow-inner`}>
+                    <code dangerouslySetInnerHTML={{ __html: initialCode }} />
+                </pre>
+            </div>
         </motion.div>
     );
 }
+
