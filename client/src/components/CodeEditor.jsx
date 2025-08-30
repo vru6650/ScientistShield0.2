@@ -37,6 +37,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     const [isRunning, setIsRunning] = useState(false);
     const [runError, setRunError] = useState(null);
     const [showOutputPanel, setShowOutputPanel] = useState(true);
+    // Toggle visibility of the expected output panel
     const [showAnswer, setShowAnswer] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [shareMessage, setShareMessage] = useState('');

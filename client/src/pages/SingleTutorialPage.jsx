@@ -363,7 +363,7 @@ export default function SingleTutorialPage() {
                 const languageFromClass = codeNode.attribs['class']?.replace('language-', '');
                 const defaultLanguage = categoryToLanguageMap[tutorial.category];
                 const language = languageFromClass || defaultLanguage || 'javascript';
-                return <InteractiveCodeBlock initialCode={codeText} language={language} />;
+                return <InteractiveCodeBlock initialCode={codeText} language={language} expectedOutput={activeChapter?.expectedOutput || ''} />;
             }
             if (domNode.type === 'tag' && domNode.name === 'img') {
                 return (
