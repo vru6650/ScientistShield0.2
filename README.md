@@ -6,7 +6,7 @@ ScientistShieldOne is a MERN-stack application for sharing knowledge and practic
 ## Features
 - **Tutorials:** Browse and read educational content on various topics.
 - **Quizzes:** Evaluate understanding through interactive quizzes.
-- **Code Editor:** Try out code snippets directly in the browser.
+- **Code Editor:** Try out code snippets directly in the browser with handy keyboard shortcuts (e.g., `Ctrl+Enter` to run, `Ctrl+S` to save, `Ctrl+Shift+F` to format).
 
 ## Directory Structure
 - `api/` – Node.js/Express backend including routes, controllers, and models.
