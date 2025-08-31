@@ -26,7 +26,11 @@ export default function TerminalPane({
         if (containerRef.current) {
             terminalRef.current.open(containerRef.current);
         }
-        return () => terminalRef.current.dispose();
+        return () => {
+            // Ensure we don't attempt to interact with a disposed terminal
+            terminalRef.current?.dispose();
+            terminalRef.current = null;
+        };
     }, []);
 
     useEffect(() => {
