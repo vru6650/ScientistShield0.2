@@ -1,7 +1,8 @@
 import { errorHandler } from '../utils/error.js';
 import User from '../models/user.model.js';
 
-export const test = (req, res) => {
+// More descriptive name for API health-check endpoint
+export const checkApiHealth = (req, res) => {
   res.json({ message: 'API is working!' });
 };
 
@@ -39,8 +40,9 @@ export const updateUser = async (req, res, next) => {
     // This automatically handles validation and password hashing as defined in the model
     const updatedUser = await userToUpdate.save();
 
-    const { password, ...rest } = updatedUser._doc;
-    res.status(200).json(rest);
+    // Remove password before returning the user data
+    const { password, ...userWithoutPassword } = updatedUser._doc;
+    res.status(200).json(userWithoutPassword);
   } catch (error) {
     // Mongoose validation errors will be caught here
     next(error);
