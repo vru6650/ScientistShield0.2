@@ -1,9 +1,9 @@
 // client/src/components/CodeEditor.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button, ToggleSwitch, Alert, Select } from 'flowbite-react';
 import { useSelector } from 'react-redux';
-import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash, FaExpand, FaCompress, FaCopy } from 'react-icons/fa';
+import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash, FaExpand, FaCompress, FaCopy, FaMagic } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 
@@ -110,6 +110,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     });
     const [showSettings, setShowSettings] = useState(false);
     const [editorWidth, setEditorWidth] = useState(50);
+    const editorRef = useRef(null);
 
     // Keep the Monaco editor theme in sync with the application theme
     useEffect(() => {
@@ -310,6 +311,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         }
     };
 
+    const formatCode = () => {
+        if (editorRef.current) {
+            editorRef.current.getAction('editor.action.formatDocument').run();
+        }
+    };
+
     return (
         <div className={`flex flex-col p-4 bg-gray-50 dark:bg-gray-900 shadow-xl ${isFullScreen ? 'fixed inset-0 z-50 h-screen w-screen rounded-none' : 'h-[90vh] md:h-[800px] rounded-lg'}`}>
             <div className="flex flex-col sm:flex-row justify-between items-center p-2 mb-4 gap-4">
@@ -424,22 +431,30 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             <FaRedo className="mr-2 h-4 w-4" /> Reset
                         </Button>
                     </motion.div>
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Button outline gradientDuoTone="purpleToBlue" onClick={copyCurrentCode}>
-                            <FaCopy className="mr-2 h-4 w-4" /> Copy Code
-                        </Button>
-                    </motion.div>
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                    >
-                        <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving}>
-                            <FaSave className="mr-2 h-4 w-4" /> Save & Share
-                        </Button>
-                    </motion.div>
+                      <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                      >
+                          <Button outline gradientDuoTone="purpleToBlue" onClick={copyCurrentCode}>
+                              <FaCopy className="mr-2 h-4 w-4" /> Copy Code
+                          </Button>
+                      </motion.div>
+                      <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                      >
+                          <Button outline gradientDuoTone="purpleToBlue" onClick={formatCode}>
+                              <FaMagic className="mr-2 h-4 w-4" /> Format
+                          </Button>
+                      </motion.div>
+                      <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                      >
+                          <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving}>
+                              <FaSave className="mr-2 h-4 w-4" /> Save & Share
+                          </Button>
+                      </motion.div>
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -487,6 +502,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                     <div className="flex-1 rounded-md overflow-hidden">
                         <Editor
                             beforeMount={registerAutocompletion}
+                            onMount={(editor) => (editorRef.current = editor)}
                             height="100%"
                             language={selectedLanguage}
                             value={codes[selectedLanguage]}
