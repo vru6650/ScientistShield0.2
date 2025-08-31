@@ -8,7 +8,11 @@ export const test = (req, res) => {
 
 // --- Upgraded updateUser Function ---
 export const updateUser = async (req, res, next) => {
-  if (req.user.id !== req.params.userId) {
+  // Allow administrators to update any user while restricting regular users
+  // to only update their own account. The previous implementation blocked
+  // admins from updating other users, which is inconsistent with the
+  // authorization logic used elsewhere (e.g. deleteUser).
+  if (!req.user.isAdmin && req.user.id !== req.params.userId) {
     return next(errorHandler(403, 'You are not allowed to update this user'));
   }
 
