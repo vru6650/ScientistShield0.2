@@ -8,7 +8,11 @@ import { errorHandler } from './error.js';
  */
 export function validateRequiredFields(fields) {
   const missing = Object.entries(fields)
-    .filter(([, value]) => value === undefined || value === null || value === '')
+    .filter(([, value]) =>
+      value === undefined ||
+      value === null ||
+      (typeof value === 'string' && value.trim() === '')
+    )
     .map(([key]) => key);
 
   if (missing.length > 0) {
