@@ -1,10 +1,11 @@
 // client/src/components/CodeEditor.jsx
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button, ToggleSwitch, Alert, Select } from 'flowbite-react';
 import { useSelector } from 'react-redux';
-import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash, FaExpand, FaCompress } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import PropTypes from 'prop-types';
 
 import LanguageSelector from './LanguageSelector';
 import TerminalPane from './TerminalPane';
@@ -97,6 +98,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     const [showAnswer, setShowAnswer] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [shareMessage, setShareMessage] = useState('');
+    const [isFullScreen, setIsFullScreen] = useState(false);
 
     // Editor appearance and behavior options
     const [editorOptions, setEditorOptions] = useState({
@@ -116,6 +118,13 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
             theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
         }));
     }, [theme]);
+
+    useEffect(() => {
+        document.body.style.overflow = isFullScreen ? 'hidden' : '';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isFullScreen]);
 
     const handleCodeChange = (newCode) => {
         setCodes(prevCodes => ({
@@ -275,7 +284,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     };
 
     return (
-        <div className="flex flex-col h-[90vh] md:h-[800px] p-4 bg-gray-50 dark:bg-gray-900 rounded-lg shadow-xl">
+        <div className={`flex flex-col p-4 bg-gray-50 dark:bg-gray-900 shadow-xl ${isFullScreen ? 'fixed inset-0 z-50 h-screen w-screen rounded-none' : 'h-[90vh] md:h-[800px] rounded-lg'}`}>
             <div className="flex flex-col sm:flex-row justify-between items-center p-2 mb-4 gap-4">
                 <LanguageSelector
                     selectedLanguage={selectedLanguage}
@@ -394,6 +403,23 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                     >
                         <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving}>
                             <FaSave className="mr-2 h-4 w-4" /> Save & Share
+                        </Button>
+                    </motion.div>
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <Button
+                            outline
+                            gradientDuoTone="purpleToBlue"
+                            onClick={() => setIsFullScreen(!isFullScreen)}
+                        >
+                            {isFullScreen ? (
+                                <FaCompress className="mr-2 h-4 w-4" />
+                            ) : (
+                                <FaExpand className="mr-2 h-4 w-4" />
+                            )}
+                            {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
                         </Button>
                     </motion.div>
                     {expectedOutput && (
@@ -533,3 +559,9 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         </div>
     );
 }
+
+CodeEditor.propTypes = {
+    initialCode: PropTypes.object,
+    language: PropTypes.string,
+    expectedOutput: PropTypes.string,
+};
