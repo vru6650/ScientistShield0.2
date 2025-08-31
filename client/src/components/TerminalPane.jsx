@@ -13,7 +13,6 @@ export default function TerminalPane({
 }) {
     const containerRef = useRef(null);
     const terminalRef = useRef(null);
-    const prevOutputRef = useRef('');
     const [isOpen, setIsOpen] = useState(true);
 
     useEffect(() => {
@@ -41,20 +40,15 @@ export default function TerminalPane({
         if (!terminalRef.current) return;
         if (!output && !error) {
             terminalRef.current.clear();
-            prevOutputRef.current = '';
             return;
         }
+        const timestamp = new Date().toLocaleTimeString();
         const text = error ? `\x1b[31m${error}\x1b[0m` : output;
-        const newText = text.slice(prevOutputRef.current.length);
-        if (newText) {
-            terminalRef.current.write(newText.replace(/\n/g, '\r\n'));
-            prevOutputRef.current = text;
-        }
+        terminalRef.current.writeln(`[${timestamp}] ${text}`.replace(/\n/g, '\r\n'));
     }, [output, error]);
 
     const handleClear = () => {
         terminalRef.current?.clear();
-        prevOutputRef.current = '';
         onClear && onClear();
     };
 
