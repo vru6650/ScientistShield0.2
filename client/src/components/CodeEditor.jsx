@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button, ToggleSwitch, Alert, Select } from 'flowbite-react';
 import { useSelector } from 'react-redux';
-import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash, FaExpand, FaCompress, FaCopy, FaMagic } from 'react-icons/fa';
+import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash, FaExpand, FaCompress, FaCopy, FaMagic, FaPlus, FaTrash } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 
@@ -26,6 +26,16 @@ const registerAutocompletion = (monaco) => {
                 insertText: 'console.log(${1});',
                 documentation: 'Console log output',
             },
+            {
+                label: 'querySelector',
+                insertText: 'document.querySelector("${1:selector}")',
+                documentation: 'document.querySelector',
+            },
+            {
+                label: 'for',
+                insertText: 'for (let i = 0; i < ${1:array}.length; i++) {\n    ${2:// code}\n}',
+                documentation: 'Basic for loop',
+            },
         ],
         html: [
             {
@@ -40,6 +50,11 @@ const registerAutocompletion = (monaco) => {
                 label: 'flex',
                 insertText: 'display: flex;\njustify-content: center;\nalign-items: center;',
                 documentation: 'Flexbox container',
+            },
+            {
+                label: 'grid',
+                insertText: 'display: grid;\ngrid-template-columns: repeat(${1:3}, 1fr);\ngap: ${2:10px};',
+                documentation: 'Grid layout',
             },
         ],
         cpp: [
@@ -78,16 +93,22 @@ const registerAutocompletion = (monaco) => {
 export default function CodeEditor({ initialCode = {}, language = 'html', expectedOutput = '' }) {
     const { theme } = useSelector((state) => state.theme);
 
-    // Consolidated state for all code snippets
-    const [codes, setCodes] = useState({
-        html: initialCode.html || defaultCodes.html,
-        css: initialCode.css || defaultCodes.css,
-        javascript: initialCode.javascript || defaultCodes.javascript,
-        cpp: initialCode.cpp || defaultCodes.cpp,
-        python: initialCode.python || defaultCodes.python,
+    const createInitialFiles = () => [
+        { id: 'html-1', name: 'index.html', language: 'html', code: initialCode.html || defaultCodes.html },
+        { id: 'css-1', name: 'style.css', language: 'css', code: initialCode.css || defaultCodes.css },
+        { id: 'js-1', name: 'script.js', language: 'javascript', code: initialCode.javascript || defaultCodes.javascript },
+        { id: 'cpp-1', name: 'main.cpp', language: 'cpp', code: initialCode.cpp || defaultCodes.cpp },
+        { id: 'py-1', name: 'main.py', language: 'python', code: initialCode.python || defaultCodes.python },
+    ];
+
+    const [files, setFiles] = useState(createInitialFiles);
+    const [selectedFileId, setSelectedFileId] = useState(() => {
+        const match = createInitialFiles().find((f) => f.language === language);
+        return match ? match.id : createInitialFiles()[0].id;
     });
 
-    const [selectedLanguage, setSelectedLanguage] = useState(language);
+    const selectedFile = files.find((f) => f.id === selectedFileId) || files[0];
+    const selectedLanguage = selectedFile.language;
     const [srcDoc, setSrcDoc] = useState('');
     const [consoleOutput, setConsoleOutput] = useState('');
     // Flag to automatically re-run code on changes
@@ -128,14 +149,44 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     }, [isFullScreen]);
 
     const handleCodeChange = (newCode) => {
-        setCodes(prevCodes => ({
-            ...prevCodes,
-            [selectedLanguage]: newCode
-        }));
+        setFiles((prev) => prev.map((f) => (f.id === selectedFileId ? { ...f, code: newCode } : f)));
     };
 
     const toggleOption = (option) => {
         setEditorOptions(prev => ({ ...prev, [option]: !prev[option] }));
+    };
+
+    const getCodeByLang = (lang) =>
+        files.filter((f) => f.language === lang).map((f) => f.code).join('\n');
+
+    const addFile = () => {
+        const name = window.prompt('Enter file name (e.g., script2.js)');
+        if (!name) return;
+        const ext = name.split('.').pop();
+        const map = { html: 'html', htm: 'html', css: 'css', js: 'javascript', jsx: 'javascript', py: 'python', cpp: 'cpp', cxx: 'cpp' };
+        const lang = map[ext];
+        if (!lang) {
+            window.alert('Unsupported file type');
+            return;
+        }
+        const id = `${lang}-${Date.now()}`;
+        setFiles((prev) => [...prev, { id, name, language: lang, code: '' }]);
+        setSelectedFileId(id);
+    };
+
+    const deleteFile = (id) => {
+        setFiles((prev) => {
+            const filtered = prev.filter((f) => f.id !== id);
+            if (selectedFileId === id && filtered.length) {
+                setSelectedFileId(filtered[0].id);
+            }
+            return filtered;
+        });
+    };
+
+    const handleLanguageChange = (lang) => {
+        const file = files.find((f) => f.language === lang);
+        if (file) setSelectedFileId(file.id);
     };
 
     const runCode = async () => {
@@ -148,7 +199,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                 const res = await fetch('/api/code/run-cpp', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: codes.cpp }),
+                    body: JSON.stringify({ code: selectedFile.code }),
                 });
                 const data = await res.json();
                 if (data.error) {
@@ -167,7 +218,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                 const res = await fetch('/api/code/run-python', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: codes.python }),
+                    body: JSON.stringify({ code: selectedFile.code }),
                 });
                 const data = await res.json();
                 if (data.error) {
@@ -185,19 +236,19 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
             const fullSrcDoc = `
                 <html>
                     <head>
-                        <style>${codes.css}</style>
+                        <style>${getCodeByLang('css')}</style>
                     </head>
                     <body>
-                        ${codes.html}
+                        ${getCodeByLang('html')}
                         <script>
                             const originalLog = console.log;
                             let outputBuffer = '';
                             console.log = (...args) => {
                                 outputBuffer += args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ') + '\\n';
                             };
-                            
+
                             try {
-                                ${codes.javascript}
+                                ${getCodeByLang('javascript')}
                                 window.parent.postMessage({
                                     type: 'js-output',
                                     output: outputBuffer.trim() || 'Execution complete.',
@@ -229,11 +280,11 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    html: codes.html,
-                    css: codes.css,
-                    js: codes.javascript,
-                    cpp: codes.cpp,
-                    python: codes.python,
+                    html: getCodeByLang('html'),
+                    css: getCodeByLang('css'),
+                    js: getCodeByLang('javascript'),
+                    cpp: getCodeByLang('cpp'),
+                    python: getCodeByLang('python'),
                 }),
             });
             const data = await res.json();
@@ -260,7 +311,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
             runCode();
         }, 1000);
         return () => clearTimeout(timeout);
-    }, [codes.html, codes.css, codes.javascript, autoRun, selectedLanguage, isLivePreviewLanguage]);
+    }, [files, autoRun, selectedLanguage, isLivePreviewLanguage]);
 
     useEffect(() => {
         if (isLivePreviewLanguage) {
@@ -286,14 +337,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
     }, []);
 
     const resetCode = () => {
-        // Reset to initialCode from props, falling back to defaults
-        setCodes({
-            html: initialCode.html || defaultCodes.html,
-            css: initialCode.css || defaultCodes.css,
-            javascript: initialCode.javascript || defaultCodes.javascript,
-            cpp: initialCode.cpp || defaultCodes.cpp,
-            python: initialCode.python || defaultCodes.python,
-        });
+        setFiles(createInitialFiles());
         setSrcDoc('');
         setConsoleOutput('');
         setRunError(null);
@@ -301,7 +345,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
 
     const copyCurrentCode = async () => {
         try {
-            await navigator.clipboard.writeText(codes[selectedLanguage]);
+            await navigator.clipboard.writeText(selectedFile.code);
             setShareMessage('Code copied to clipboard!');
         } catch (err) {
             console.error('Failed to copy code:', err);
@@ -322,7 +366,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
             <div className="flex flex-col sm:flex-row justify-between items-center p-2 mb-4 gap-4">
                 <LanguageSelector
                     selectedLanguage={selectedLanguage}
-                    setSelectedLanguage={setSelectedLanguage}
+                    setSelectedLanguage={handleLanguageChange}
                 />
                 <div className="flex items-center gap-4">
                     {isLivePreviewLanguage && (
@@ -499,29 +543,68 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                     className="flex-1 flex flex-col rounded-md shadow-inner bg-white dark:bg-gray-800 p-2"
                     style={{ width: showOutputPanel ? `${editorWidth}%` : '100%' }}
                 >
-                    <div className="flex-1 rounded-md overflow-hidden">
-                        <Editor
-                            beforeMount={registerAutocompletion}
-                            onMount={(editor) => (editorRef.current = editor)}
-                            height="100%"
-                            language={selectedLanguage}
-                            value={codes[selectedLanguage]}
-                            theme={editorOptions.theme}
-                            onChange={handleCodeChange}
-                            options={{
-                                minimap: { enabled: editorOptions.minimap },
-                                fontSize: editorOptions.fontSize,
-                                lineNumbers: editorOptions.lineNumbers ? 'on' : 'off',
-                                wordWrap: editorOptions.wordWrap ? 'on' : 'off',
-                                smoothScrolling: true,
-                                automaticLayout: true,
-                                folding: true,
-                                scrollbar: { vertical: 'auto', horizontal: 'auto' },
-                                padding: { top: 10, bottom: 10 },
-                                tabCompletion: 'on',
-                                suggestOnTriggerCharacters: true,
-                            }}
-                        />
+                    <div className="flex h-full">
+                        <div
+                            className="resize-x overflow-auto bg-gray-100 dark:bg-gray-700 rounded-md p-2 mr-2"
+                            style={{ minWidth: '150px' }}
+                        >
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">Files</span>
+                                <button onClick={addFile} className="text-blue-500 hover:text-blue-700">
+                                    <FaPlus />
+                                </button>
+                            </div>
+                            <ul className="text-sm space-y-1">
+                                {files.map((file) => (
+                                    <li
+                                        key={file.id}
+                                        onClick={() => setSelectedFileId(file.id)}
+                                        className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
+                                            selectedFileId === file.id
+                                                ? 'bg-purple-200 dark:bg-purple-600 text-gray-900 dark:text-white'
+                                                : 'hover:bg-gray-200 dark:hover:bg-gray-600'
+                                        }`}
+                                    >
+                                        <span>{file.name}</span>
+                                        {files.length > 1 && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    deleteFile(file.id);
+                                                }}
+                                                className="text-red-500 hover:text-red-700"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="flex-1 rounded-md overflow-hidden">
+                            <Editor
+                                beforeMount={registerAutocompletion}
+                                onMount={(editor) => (editorRef.current = editor)}
+                                height="100%"
+                                language={selectedLanguage}
+                                value={selectedFile.code}
+                                theme={editorOptions.theme}
+                                onChange={handleCodeChange}
+                                options={{
+                                    minimap: { enabled: editorOptions.minimap },
+                                    fontSize: editorOptions.fontSize,
+                                    lineNumbers: editorOptions.lineNumbers ? 'on' : 'off',
+                                    wordWrap: editorOptions.wordWrap ? 'on' : 'off',
+                                    smoothScrolling: true,
+                                    automaticLayout: true,
+                                    folding: true,
+                                    scrollbar: { vertical: 'auto', horizontal: 'auto' },
+                                    padding: { top: 10, bottom: 10 },
+                                    tabCompletion: 'on',
+                                    suggestOnTriggerCharacters: true,
+                                }}
+                            />
+                        </div>
                     </div>
                 </div>
 
