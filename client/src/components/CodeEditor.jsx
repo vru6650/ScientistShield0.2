@@ -18,9 +18,8 @@ const defaultCodes = {
     python: `print("Hello, Python!")`
 };
 
-const registerAutocompletion = (monaco) => {
-    const suggestions = {
-        javascript: [
+const suggestions = {
+    javascript: [
             {
                 label: 'log',
                 insertText: 'console.log(${1});',
@@ -65,14 +64,19 @@ const registerAutocompletion = (monaco) => {
                 documentation: 'Basic main function',
             },
         ],
-        python: [
-            {
-                label: 'print',
-                insertText: 'print("$1")',
-                documentation: 'Print to console',
-            },
-        ],
-    };
+    python: [
+        {
+            label: 'print',
+            insertText: 'print("$1")',
+            documentation: 'Print to console',
+        },
+    ],
+};
+
+let isAutocompleteRegistered = false;
+const registerAutocompletion = (monaco) => {
+    if (isAutocompleteRegistered) return;
+    isAutocompleteRegistered = true;
 
     Object.entries(suggestions).forEach(([lang, items]) => {
         monaco.languages.registerCompletionItemProvider(lang, {
