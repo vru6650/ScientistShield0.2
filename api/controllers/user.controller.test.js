@@ -56,3 +56,20 @@ test('admin users can update other user accounts', async () => {
   User.findById = originalFindById;
 });
 
+test('non-admin users cannot update other user accounts', async () => {
+  const req = {
+    user: { id: 'user1', isAdmin: false },
+    params: { userId: 'otherUser' },
+    body: { username: 'newname' },
+  };
+  const res = createMockResponse();
+  let nextErr = null;
+  const next = (err) => { nextErr = err; };
+
+  await updateUser(req, res, next);
+
+  assert.ok(nextErr, 'next should receive an error');
+  assert.equal(nextErr.statusCode, 403);
+  assert.equal(nextErr.message, 'You are not allowed to update this user');
+});
+
