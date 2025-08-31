@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Button, Spinner } from 'flowbite-react';
+import { Button, Spinner, Alert } from 'flowbite-react';
 import { FaTerminal, FaChevronDown, FaChevronRight, FaTrash, FaKeyboard } from 'react-icons/fa';
 import { Terminal } from 'xterm';
 import 'xterm/css/xterm.css';
@@ -14,6 +14,7 @@ export default function TerminalPane({
     const containerRef = useRef(null);
     const terminalRef = useRef(null);
     const [isOpen, setIsOpen] = useState(true);
+    const showSuccess = output && !error;
 
     useEffect(() => {
         terminalRef.current = new Terminal({
@@ -76,6 +77,16 @@ export default function TerminalPane({
                     </Button>
                 </div>
             </div>
+            {isOpen && showSuccess && (
+                <Alert color="success" className="mb-2">
+                    <span className="font-medium">Success:</span> Experiment completed securely.
+                </Alert>
+            )}
+            {isOpen && (
+                <p className="text-xs font-bold mb-2 text-gray-700 dark:text-gray-300">
+                    Note: This terminal runs in a secure sandbox environment.
+                </p>
+            )}
             <div
                 className={`flex-1 relative rounded-md overflow-hidden bg-white dark:bg-gray-800 ${
                     isOpen ? '' : 'hidden'
