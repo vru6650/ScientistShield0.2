@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import ScrollToTop from './ScrollToTop';
+import BackToTopButton from './BackToTopButton';
 
 /**
  * Renders the common layout for the application, including the
@@ -16,6 +17,7 @@ export default function MainLayout() {
             <main>
                 <Outlet />
             </main>
+            <BackToTopButton />
             <Footer />
         </>
     );
