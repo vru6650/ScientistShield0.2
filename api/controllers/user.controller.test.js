@@ -1,9 +1,6 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import { updateUser } from './user.controller.js';
 import User from '../models/user.model.js';
 
-// Helper to create a mock request, response and next function
 function createMockResponse() {
   return {
     statusCode: null,
@@ -19,57 +16,68 @@ function createMockResponse() {
   };
 }
 
-test('admin users can update other user accounts', async () => {
-  // Save original method to restore later
-  const originalFindById = User.findById;
-
-  // Mock the database call to findById
-  User.findById = async () => ({
-    username: 'oldname',
-    email: 'user@example.com',
-    profilePicture: 'pic.png',
-    _doc: { username: 'oldname', email: 'user@example.com', profilePicture: 'pic.png', password: 'hashed' },
-    async save() {
-      // Simulate mongoose save updating the _doc property
-      this._doc = { username: this.username, email: this.email, profilePicture: this.profilePicture, password: 'hashed' };
-      return this;
-    },
+describe('updateUser', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
   });
 
-  const req = {
-    user: { id: 'adminId', isAdmin: true },
-    params: { userId: 'targetUser' },
-    body: { username: 'newname' },
-  };
-  const res = createMockResponse();
-  let nextErr = null;
-  const next = (err) => { nextErr = err; };
+  test('admin users can update other user accounts', async () => {
+    jest.spyOn(User, 'findById').mockResolvedValue({
+      username: 'oldname',
+      email: 'user@example.com',
+      profilePicture: 'pic.png',
+      _doc: {
+        username: 'oldname',
+        email: 'user@example.com',
+        profilePicture: 'pic.png',
+        password: 'hashed',
+      },
+      save: jest.fn().mockImplementation(function () {
+        this._doc = {
+          username: this.username,
+          email: this.email,
+          profilePicture: this.profilePicture,
+          password: 'hashed',
+        };
+        return this;
+      }),
+    });
 
-  await updateUser(req, res, next);
+    const req = {
+      user: { id: 'adminId', isAdmin: true },
+      params: { userId: 'targetUser' },
+      body: { username: 'newname' },
+    };
+    const res = createMockResponse();
+    let nextErr = null;
+    const next = (err) => {
+      nextErr = err;
+    };
 
-  assert.equal(nextErr, null, 'next should not receive an error');
-  assert.equal(res.statusCode, 200);
-  assert.equal(res.body.username, 'newname');
-  assert.ok(!('password' in res.body), 'response should not expose password');
+    await updateUser(req, res, next);
 
-  // Restore original method
-  User.findById = originalFindById;
+    expect(nextErr).toBeNull();
+    expect(res.statusCode).toBe(200);
+    expect(res.body.username).toBe('newname');
+    expect(res.body).not.toHaveProperty('password');
+  });
+
+  test('non-admin users cannot update other user accounts', async () => {
+    const req = {
+      user: { id: 'user1', isAdmin: false },
+      params: { userId: 'otherUser' },
+      body: { username: 'newname' },
+    };
+    const res = createMockResponse();
+    let nextErr = null;
+    const next = (err) => {
+      nextErr = err;
+    };
+
+    await updateUser(req, res, next);
+
+    expect(nextErr).toBeTruthy();
+    expect(nextErr.statusCode).toBe(403);
+    expect(nextErr.message).toBe('You are not allowed to update this user');
+  });
 });
-
-test('non-admin users cannot update other user accounts', async () => {
-  const req = {
-    user: { id: 'user1', isAdmin: false },
-    params: { userId: 'otherUser' },
-    body: { username: 'newname' },
-  };
-  const res = createMockResponse();
-  let nextErr = null;
-  const next = (err) => { nextErr = err; };
-
-  await updateUser(req, res, next);
-
-  assert.ok(nextErr, 'next should receive an error');
-  assert.equal(nextErr.statusCode, 403);
-  assert.equal(nextErr.message, 'You are not allowed to update this user');
-});
-
