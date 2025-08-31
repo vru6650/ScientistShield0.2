@@ -365,6 +365,25 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         }
     };
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                runCode();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+                e.preventDefault();
+                saveSnippet();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'f') {
+                e.preventDefault();
+                formatCode();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [runCode, saveSnippet, formatCode]);
+
     return (
         <div className={`flex flex-col p-4 bg-gray-50 dark:bg-gray-900 shadow-xl ${isFullScreen ? 'fixed inset-0 z-50 h-screen w-screen rounded-none' : 'h-[90vh] md:h-[800px] rounded-lg'}`}>
             <div className="flex flex-col sm:flex-row justify-between items-center p-2 mb-4 gap-4">
@@ -467,6 +486,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             onClick={runCode}
                             isProcessing={isRunning}
                             disabled={isRunning}
+                            title="Run Code (Ctrl+Enter)"
                         >
                             <FaPlay className="mr-2 h-4 w-4" /> Run Code
                         </Button>
@@ -483,7 +503,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                       >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={copyCurrentCode}>
+                          <Button outline gradientDuoTone="purpleToBlue" onClick={copyCurrentCode} title="Copy Code">
                               <FaCopy className="mr-2 h-4 w-4" /> Copy Code
                           </Button>
                       </motion.div>
@@ -491,7 +511,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                       >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={formatCode}>
+                          <Button outline gradientDuoTone="purpleToBlue" onClick={formatCode} title="Format Code (Ctrl+Shift+F)">
                               <FaMagic className="mr-2 h-4 w-4" /> Format
                           </Button>
                       </motion.div>
@@ -499,7 +519,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                       >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving}>
+                          <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving} title="Save & Share (Ctrl+S)">
                               <FaSave className="mr-2 h-4 w-4" /> Save & Share
                           </Button>
                       </motion.div>
