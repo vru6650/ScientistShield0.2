@@ -1,36 +1,29 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
 import { generateSlug } from './slug.js';
 
-test('generateSlug converts title to URL-friendly slug', () => {
-    const slug = generateSlug('Hello World!');
-    assert.strictEqual(slug, 'hello-world');
-});
+describe('generateSlug', () => {
+  test('converts title to URL-friendly slug', () => {
+    expect(generateSlug('Hello World!')).toBe('hello-world');
+  });
 
-test('generateSlug removes non-alphanumeric characters', () => {
-    const slug = generateSlug('React & Node.js Basics');
-    assert.strictEqual(slug, 'react-nodejs-basics');
-});
+  test('removes non-alphanumeric characters', () => {
+    expect(generateSlug('React & Node.js Basics')).toBe('react-nodejs-basics');
+  });
 
-test('generateSlug converts underscores to hyphens', () => {
-    const slug = generateSlug('Hello_world_again');
-    assert.strictEqual(slug, 'hello-world-again');
-});
+  test('converts underscores to hyphens', () => {
+    expect(generateSlug('Hello_world_again')).toBe('hello-world-again');
+  });
 
-test('generateSlug collapses whitespace and trims hyphens', () => {
-    const slug = generateSlug('  Multiple   Spaces -- and symbols!!!  ');
-    assert.strictEqual(slug, 'multiple-spaces-and-symbols');
-});
+  test('collapses whitespace and trims hyphens', () => {
+    expect(generateSlug('  Multiple   Spaces -- and symbols!!!  ')).toBe(
+      'multiple-spaces-and-symbols',
+    );
+  });
 
-test('generateSlug returns empty string when given only whitespace', () => {
-    const slug = generateSlug('   ');
-    assert.strictEqual(slug, '');
-});
+  test('returns empty string when given only whitespace', () => {
+    expect(generateSlug('   ')).toBe('');
+  });
 
-test('generateSlug throws an error when input is not a string', () => {
-    assert.throws(() => generateSlug(123), {
-        name: 'TypeError',
-        message: 'Title must be a string',
-    });
-
+  test('throws an error when input is not a string', () => {
+    expect(() => generateSlug(123)).toThrow('Title must be a string');
+  });
 });
