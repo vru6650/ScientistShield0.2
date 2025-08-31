@@ -107,6 +107,31 @@ export default function TiptapEditor({ content, onChange, placeholder }) {
         }
     }, [content, editor]);
 
+    useEffect(() => {
+        if (!editor) return;
+
+        const addCopyButtons = () => {
+            const blocks = editor.view.dom.querySelectorAll('pre');
+            blocks.forEach((block) => {
+                if (block.querySelector('.code-copy-btn')) return;
+                const button = document.createElement('button');
+                button.innerText = 'Copy';
+                button.className = 'code-copy-btn';
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('code')?.textContent || '';
+                    navigator.clipboard.writeText(code);
+                });
+                block.appendChild(button);
+            });
+        };
+
+        addCopyButtons();
+        editor.on('update', addCopyButtons);
+        return () => {
+            editor.off('update', addCopyButtons);
+        };
+    }, [editor]);
+
     const addYoutubeVideo = useCallback(() => {
         const url = prompt('Enter YouTube URL');
         if (url && editor) {
