@@ -197,9 +197,17 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             
                             try {
                                 ${codes.javascript}
-                                window.parent.postMessage({ type: 'js-output', output: outputBuffer.trim() || 'Execution complete.' }, '*');
+                                window.parent.postMessage({
+                                    type: 'js-output',
+                                    output: outputBuffer.trim() || 'Execution complete.',
+                                    isError: false
+                                }, '*');
                             } catch (e) {
-                                window.parent.postMessage({ type: 'js-output', output: 'Error: ' + e.message }, '*');
+                                window.parent.postMessage({
+                                    type: 'js-output',
+                                    output: e.message,
+                                    isError: true
+                                }, '*');
                             } finally {
                                 console.log = originalLog;
                             }
@@ -261,8 +269,15 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
 
     useEffect(() => {
         const handleMessage = (event) => {
+            if (event.origin !== window.location.origin) return;
             if (event.data?.type === 'js-output') {
-                setConsoleOutput(event.data.output);
+                if (event.data.isError) {
+                    setRunError(event.data.output);
+                    setConsoleOutput('');
+                } else {
+                    setRunError(null);
+                    setConsoleOutput(event.data.output);
+                }
             }
         };
         window.addEventListener('message', handleMessage);
