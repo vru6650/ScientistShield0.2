@@ -1,20 +1,50 @@
 // client/src/components/InteractiveCodeBlock.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from 'flowbite-react';
-import { FaPlayCircle, FaCode, FaTimes, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaPlayCircle, FaCode, FaTimes, FaExternalLinkAlt, FaCopy } from 'react-icons/fa';
+import hljs from 'highlight.js';
 import CodeEditor from './CodeEditor';
 
 export default function InteractiveCodeBlock({ initialCode, language }) {
     const [isInteractive, setIsInteractive] = useState(false);
+    const [detectedLanguage, setDetectedLanguage] = useState(language || 'plaintext');
+
+    useEffect(() => {
+        if (language) {
+            setDetectedLanguage(language);
+        } else {
+            const result = hljs.highlightAuto(initialCode);
+            setDetectedLanguage(result.language || 'plaintext');
+        }
+    }, [initialCode, language]);
+
+    const highlightedCode = useMemo(() => {
+        const { value } = hljs.highlight(initialCode, { language: detectedLanguage });
+        return value
+            .split('\n')
+            .map(
+                (line, i) =>
+                    `<span class='block'><span class="select-none mr-4 text-gray-400 dark:text-gray-500">${i + 1}</span>${line || '&nbsp;'}</span>`
+            )
+            .join('\n');
+    }, [initialCode, detectedLanguage]);
 
     const handleToggle = () => {
         setIsInteractive(!isInteractive);
     };
 
     const handleOpenInNewTab = () => {
-        const url = `/tryit?code=${encodeURIComponent(initialCode)}&language=${language}`;
+        const url = `/tryit?code=${encodeURIComponent(initialCode)}&language=${detectedLanguage}`;
         window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
+    const handleCopy = async () => {
+        try {
+            await navigator.clipboard.writeText(initialCode);
+        } catch (err) {
+            console.error('Failed to copy code:', err);
+        }
     };
 
     const containerVariants = {
@@ -91,8 +121,8 @@ export default function InteractiveCodeBlock({ initialCode, language }) {
                         className="pt-6"
                     >
                         <CodeEditor
-                            initialCode={{ [language]: initialCode }}
-                            language={language}
+                            initialCode={{ [detectedLanguage]: initialCode }}
+                            language={detectedLanguage}
                         />
                     </motion.div>
                 ) : (
@@ -105,18 +135,26 @@ export default function InteractiveCodeBlock({ initialCode, language }) {
                         className="pt-6"
                     >
                         <div className="w-full relative group">
-                            <pre className={`p-5 rounded-lg bg-gray-900 text-white language-${language} overflow-x-auto text-sm shadow-inner`}>
-                                <code dangerouslySetInnerHTML={{ __html: initialCode }} />
+                            <pre className="p-5 rounded-lg bg-gray-900 text-white overflow-x-auto text-sm shadow-inner">
+                                <code
+                                    className={`hljs language-${detectedLanguage}`}
+                                    dangerouslySetInnerHTML={{ __html: highlightedCode }}
+                                />
                             </pre>
-                            <motion.div
-                                {...motionWrapperProps}
-                                className="absolute bottom-4 right-4 z-10"
-                            >
-                                <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={handleOpenInNewTab}>
-                                    <FaExternalLinkAlt className="mr-1" />
-                                    Open in new tab
-                                </Button>
-                            </motion.div>
+                            <div className="absolute top-4 right-4 z-10 flex gap-2">
+                                <motion.div {...motionWrapperProps}>
+                                    <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={handleCopy}>
+                                        <FaCopy className="mr-1" />
+                                        Copy
+                                    </Button>
+                                </motion.div>
+                                <motion.div {...motionWrapperProps}>
+                                    <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={handleOpenInNewTab}>
+                                        <FaExternalLinkAlt className="mr-1" />
+                                        Open in new tab
+                                    </Button>
+                                </motion.div>
+                            </div>
                         </div>
                     </motion.div>
                 )}
