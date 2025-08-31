@@ -97,6 +97,7 @@
     font-family: 'JetBrainsMono', monospace;
     padding: 0.75rem 1rem;
     border-radius: 0.5rem;
+    position: relative;
 }
 
 .tiptap pre code {
@@ -104,6 +105,25 @@
     padding: 0;
     background: none;
     font-size: 0.8rem;
+}
+
+.code-copy-btn {
+    position: absolute;
+    top: 0.25rem;
+    right: 0.25rem;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    border: none;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.tiptap pre:hover .code-copy-btn {
+    opacity: 1;
 }
 
 .tiptap img {
