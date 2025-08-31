@@ -474,6 +474,8 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                 value={editorWidth}
                                 onChange={(e) => setEditorWidth(Number(e.target.value))}
                                 className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                                aria-label="Editor width"
+                                title="Adjust editor width"
                             />
                         </div>
                     )}
@@ -495,7 +497,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                     >
-                        <Button outline gradientDuoTone="pinkToOrange" onClick={resetCode}>
+                        <Button outline gradientDuoTone="pinkToOrange" onClick={resetCode} title="Reset code">
                             <FaRedo className="mr-2 h-4 w-4" /> Reset
                         </Button>
                     </motion.div>
@@ -531,6 +533,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             outline
                             gradientDuoTone="purpleToBlue"
                             onClick={() => setIsFullScreen(!isFullScreen)}
+                            title={isFullScreen ? 'Exit full screen' : 'Full screen'}
                         >
                             {isFullScreen ? (
                                 <FaCompress className="mr-2 h-4 w-4" />
@@ -545,7 +548,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                         >
-                            <Button outline gradientDuoTone="greenToBlue" onClick={() => setShowAnswer(!showAnswer)}>
+                            <Button
+                                outline
+                                gradientDuoTone="greenToBlue"
+                                onClick={() => setShowAnswer(!showAnswer)}
+                                title={showAnswer ? 'Hide answer' : 'Show answer'}
+                            >
                                 {showAnswer ? (
                                     <FaEyeSlash className="mr-2 h-4 w-4" />
                                 ) : (
@@ -574,7 +582,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                         >
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">Files</span>
-                                <button onClick={addFile} className="text-blue-500 hover:text-blue-700">
+                                <button
+                                    onClick={addFile}
+                                    className="text-blue-500 hover:text-blue-700"
+                                    title="Add file"
+                                    aria-label="Add file"
+                                >
                                     <FaPlus />
                                 </button>
                             </div>
@@ -597,6 +610,8 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                                     deleteFile(file.id);
                                                 }}
                                                 className="text-red-500 hover:text-red-700"
+                                                title="Delete file"
+                                                aria-label="Delete file"
                                             >
                                                 <FaTrash />
                                             </button>
@@ -662,6 +677,8 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                                 gradientDuoTone="purpleToBlue"
                                                 onClick={() => isLivePreviewLanguage && setShowOutputPanel(!showOutputPanel)}
                                                 disabled={!isLivePreviewLanguage}
+                                                title={showOutputPanel ? 'Collapse output panel' : 'Expand output panel'}
+                                                aria-label={showOutputPanel ? 'Collapse output panel' : 'Expand output panel'}
                                             >
                                                 {showOutputPanel ? <FaChevronDown /> : <FaChevronRight />}
                                             </Button>

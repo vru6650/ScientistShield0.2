@@ -70,13 +70,34 @@ export default function TerminalPane({
                     <FaTerminal /> Terminal
                 </h3>
                 <div className="flex items-center gap-2">
-                    <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={handleClear}>
+                    <Button
+                        size="xs"
+                        outline
+                        gradientDuoTone="purpleToBlue"
+                        onClick={handleClear}
+                        title="Clear terminal"
+                        aria-label="Clear terminal"
+                    >
                         <FaTrash />
                     </Button>
-                    <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={handleFocus}>
+                    <Button
+                        size="xs"
+                        outline
+                        gradientDuoTone="purpleToBlue"
+                        onClick={handleFocus}
+                        title="Focus terminal"
+                        aria-label="Focus terminal"
+                    >
                         <FaKeyboard />
                     </Button>
-                    <Button size="xs" outline gradientDuoTone="purpleToBlue" onClick={toggleOpen}>
+                    <Button
+                        size="xs"
+                        outline
+                        gradientDuoTone="purpleToBlue"
+                        onClick={toggleOpen}
+                        title={isOpen ? 'Collapse terminal' : 'Expand terminal'}
+                        aria-label={isOpen ? 'Collapse terminal' : 'Expand terminal'}
+                    >
                         {isOpen ? <FaChevronDown /> : <FaChevronRight />}
                     </Button>
                 </div>
