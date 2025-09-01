@@ -14,6 +14,7 @@ import pythonRoutes from './routes/python.route.js';
 
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 
 dotenv.config();
@@ -35,13 +36,14 @@ if (!JWT_SECRET) {
 mongoose
     .connect(MONGO_URI)
     .then(() => {
-        console.log('db');
+        console.log('Connected to MongoDB');
     })
     .catch((err) => {
         console.log(err);
     });
 
-const __dirname = path.resolve();
+// Resolve the directory name of this module in an ESM-compatible way
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
