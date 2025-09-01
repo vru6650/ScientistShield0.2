@@ -132,6 +132,8 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         minimap: false,
         lineNumbers: true,
         theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
+        fontFamily: 'monospace',
+        showRuler: false,
     });
     const [showSettings, setShowSettings] = useState(false);
     const [editorWidth, setEditorWidth] = useState(50);
@@ -427,6 +429,24 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                     </Select>
                                 </div>
                                 <div>
+                                    <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Font Family</label>
+                                    <Select
+                                        size="sm"
+                                        value={editorOptions.fontFamily}
+                                        onChange={(e) =>
+                                            setEditorOptions({
+                                                ...editorOptions,
+                                                fontFamily: e.target.value,
+                                            })
+                                        }
+                                    >
+                                        <option value="monospace">Monospace</option>
+                                        <option value="'Fira Code', monospace">Fira Code</option>
+                                        <option value="'Source Code Pro', monospace">Source Code Pro</option>
+                                        <option value="'JetBrains Mono', monospace">JetBrains Mono</option>
+                                    </Select>
+                                </div>
+                                <div>
                                     <label className="block text-xs font-medium text-gray-700 dark:text-gray-200 mb-1">Theme</label>
                                     <Select
                                         size="sm"
@@ -459,6 +479,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                     checked={editorOptions.lineNumbers}
                                     onChange={() => toggleOption('lineNumbers')}
                                     label="Line Numbers"
+                                    className="text-sm"
+                                />
+                                <ToggleSwitch
+                                    checked={editorOptions.showRuler}
+                                    onChange={() => toggleOption('showRuler')}
+                                    label="80-Column Ruler"
                                     className="text-sm"
                                 />
                             </div>
@@ -632,6 +658,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                 options={{
                                     minimap: { enabled: editorOptions.minimap },
                                     fontSize: editorOptions.fontSize,
+                                    fontFamily: editorOptions.fontFamily,
                                     lineNumbers: editorOptions.lineNumbers ? 'on' : 'off',
                                     wordWrap: editorOptions.wordWrap ? 'on' : 'off',
                                     smoothScrolling: true,
@@ -641,6 +668,7 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                     padding: { top: 10, bottom: 10 },
                                     tabCompletion: 'on',
                                     suggestOnTriggerCharacters: true,
+                                    rulers: editorOptions.showRuler ? [80] : [],
                                 }}
                             />
                         </div>
