@@ -76,6 +76,25 @@ html {
  */
 
 /*
+ * --- Skip Link ---
+ * Provides a visible focusable link to skip navigation.
+ */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background-color: var(--color-accent);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  z-index: 100;
+  transition: top 0.3s;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+
+/*
  * --- Animated Gradient ---
  * Reusable animation for subtle background gradients.
  */
