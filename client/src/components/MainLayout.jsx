@@ -12,9 +12,11 @@ import BackToTopButton from './BackToTopButton';
 export default function MainLayout() {
     return (
         <>
+            {/* Skip link for improved accessibility */}
+            <a href="#main-content" className="skip-link">Skip to main content</a>
             <ScrollToTop />
             <Header />
-            <main>
+            <main id="main-content">
                 <Outlet />
             </main>
             <BackToTopButton />
