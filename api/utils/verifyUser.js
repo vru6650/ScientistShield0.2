@@ -21,6 +21,9 @@ export const verifyToken = (req, res, next) => {
     } catch (error) {
         // It's helpful to log the error for debugging purposes.
         console.error('JWT Verification Error:', error.message);
+        if (error.name === 'TokenExpiredError') {
+            return next(errorHandler(401, 'Token expired'));
+        }
         return next(errorHandler(401, 'Unauthorized'));
     }
 };
