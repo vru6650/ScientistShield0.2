@@ -6,8 +6,9 @@ import jwt from 'jsonwebtoken';
 
 /**
  * Signs a JWT for the provided payload using the application's secret.
- * Throws an error when the secret is missing so it can be handled by the
- * route's error middleware.
+ * An expiration is included to reduce the risk of token replay and enforce
+ * re-authentication. The secret is read from the environment and an error is
+ * thrown if it is missing so callers can handle it consistently.
  *
  * @param {object} payload - Data to embed within the token.
  * @returns {string} Signed JSON Web Token.
@@ -18,7 +19,7 @@ const signToken = (payload) => {
     // Using the same error handler ensures consistent error responses
     throw errorHandler(500, 'JWT secret is missing');
   }
-  return jwt.sign(payload, secret);
+  return jwt.sign(payload, secret, { expiresIn: '1h' });
 };
 
 export const signup = async (req, res, next) => {
@@ -58,6 +59,9 @@ export const signin = async (req, res, next) => {
       .status(200)
       .cookie('access_token', token, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 60 * 60 * 1000, // 1 hour
       })
       .json(rest);
   } catch (error) {
@@ -76,6 +80,9 @@ export const google = async (req, res, next) => {
           .status(200)
           .cookie('access_token', token, {
             httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 60 * 60 * 1000,
           })
           .json(rest);
     }
@@ -99,6 +106,9 @@ export const google = async (req, res, next) => {
         .status(200)
         .cookie('access_token', token, {
           httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 60 * 60 * 1000,
         })
         .json(rest);
   } catch (error) {
@@ -115,7 +125,12 @@ export const github = async (req, res, next) => {
       const { password: _password, ...rest } = user._doc;
       return res
           .status(200)
-          .cookie('access_token', token, { httpOnly: true })
+          .cookie('access_token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 60 * 60 * 1000,
+          })
           .json(rest);
     }
     const generatedPassword =
@@ -135,7 +150,12 @@ export const github = async (req, res, next) => {
     const { password: _password, ...rest } = newUser._doc;
     res
         .status(200)
-        .cookie('access_token', token, { httpOnly: true })
+        .cookie('access_token', token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict',
+          maxAge: 60 * 60 * 1000,
+        })
         .json(rest);
   } catch (error) {
     next(error);

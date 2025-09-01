@@ -57,10 +57,6 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}!`);
-});
-
 app.use('/api/user', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/post', postRoutes);
@@ -91,3 +87,11 @@ app.use((err, req, res, next) => {
         message,
     });
 });
+
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}!`);
+    });
+}
+
+export default app;
