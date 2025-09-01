@@ -35,6 +35,12 @@ export const updateUser = async (req, res, next) => {
     if (req.body.profilePicture) {
       userToUpdate.profilePicture = req.body.profilePicture;
     }
+    if (req.body.bio !== undefined) {
+      userToUpdate.bio = req.body.bio;
+    }
+    if (req.body.profileCompleted !== undefined) {
+      userToUpdate.profileCompleted = req.body.profileCompleted;
+    }
 
     // Using user.save() will trigger the Mongoose pre-save middleware
     // This automatically handles validation and password hashing as defined in the model

@@ -81,8 +81,11 @@ function CommandMenu({ isOpen, onClose }) {
 
 const navLinks = [
   { label: 'Home', path: '/' },
-  { label: 'About', path: '/about' },
+  { label: 'Tutorials', path: '/tutorials', id: 'tutorial-link' },
+  { label: 'Quizzes', path: '/quizzes', id: 'quiz-link' },
+  { label: 'Code Editor', path: '/tryit', id: 'editor-link' },
   { label: 'Projects', path: '/projects' },
+  { label: 'About', path: '/about' },
 ];
 
 
@@ -209,7 +212,7 @@ export default function Header() {
                   const isActive = path === link.path;
                   return (
                       <motion.div variants={navItemVariants} key={link.path}>
-                        <Link to={link.path} className='relative px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors'>
+                        <Link id={link.id} to={link.path} className='relative px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors'>
                           {isActive && (<motion.span layoutId='active-pill' className='absolute inset-0 bg-gray-100 dark:bg-gray-700 rounded-full' style={{ borderRadius: 9999 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} />)}
                           <span className='relative z-10'>{link.label}</span>
                         </Link>
@@ -280,7 +283,7 @@ export default function Header() {
                 <Navbar.Toggle />
               </div>
               <Navbar.Collapse>
-                {navLinks.map((link) => (<Navbar.Link active={path === link.path} as={'div'} key={link.path} className="lg:hidden"><Link to={link.path}>{link.label}</Link></Navbar.Link>))}
+                {navLinks.map((link) => (<Navbar.Link active={path === link.path} as={'div'} key={link.path} className="lg:hidden"><Link id={link.id} to={link.path}>{link.label}</Link></Navbar.Link>))}
               </Navbar.Collapse>
             </Navbar>
           </div>
