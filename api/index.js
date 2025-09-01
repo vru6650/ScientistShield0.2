@@ -18,17 +18,22 @@ import cors from 'cors';
 
 dotenv.config();
 
-// Ensure required environment variables are present
-const requiredEnv = ['MONGO_URI', 'CORS_ORIGIN', 'PORT', 'JWT_SECRET'];
-for (const name of requiredEnv) {
-    if (!process.env[name]) {
-        console.error(`${name} is not set. Exiting.`);
-        process.exit(1);
-    }
+// Destructure environment variables with sensible defaults for non-critical ones.
+// Only JWT_SECRET is required for the server to run.
+const {
+    MONGO_URI = 'mongodb://0.0.0.0:27017/myappp',
+    CORS_ORIGIN = 'http://localhost:5173',
+    PORT = 3000,
+    JWT_SECRET,
+} = process.env;
+
+if (!JWT_SECRET) {
+    console.error('JWT_SECRET is not set. Exiting.');
+    process.exit(1);
 }
 
 mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(MONGO_URI)
     .then(() => {
         console.log('db');
     })
@@ -40,16 +45,18 @@ const __dirname = path.resolve();
 
 const app = express();
 
-app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true,
-}));
+app.use(
+    cors({
+        origin: CORS_ORIGIN,
+        credentials: true,
+    })
+);
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.listen(process.env.PORT, () => {
-    console.log(`Server is running on port ${process.env.PORT}!`);
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}!`);
 });
 
 app.use('/api/user', userRoutes);
