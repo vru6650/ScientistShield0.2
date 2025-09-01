@@ -1,5 +1,5 @@
 // client/src/components/DashProfile.jsx
-import { Alert, Button, FileInput, Select, TextInput, Spinner, Modal } from 'flowbite-react';
+import { Alert, Button, FileInput, Select, TextInput, Textarea, Spinner, Modal } from 'flowbite-react';
 import { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { CircularProgressbar } from 'react-circular-progressbar';
@@ -89,7 +89,7 @@ export default function DashProfile() {
       const res = await fetch(`/api/user/update/${currentUser._id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, profileCompleted: true }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -176,6 +176,7 @@ export default function DashProfile() {
           <TextInput id='username' type='text' placeholder='username' defaultValue={currentUser.username} onChange={handleChange} />
           <TextInput id='email' type='email' placeholder='email' defaultValue={currentUser.email} onChange={handleChange} />
           <TextInput id='password' type='password' placeholder='password' onChange={handleChange} />
+          <Textarea id='bio' placeholder='bio' defaultValue={currentUser.bio} onChange={handleChange} />
 
           <Button type='submit' gradientDuoTone='purpleToBlue' outline disabled={loading || isUploading}>
             {loading ? 'Loading...' : 'Update'}

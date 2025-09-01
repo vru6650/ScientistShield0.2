@@ -3,6 +3,8 @@ import Header from './Header';
 import Footer from './Footer';
 import ScrollToTop from './ScrollToTop';
 import BackToTopButton from './BackToTopButton';
+import Onboarding from './Onboarding';
+import ProfileCompletionPrompt from './ProfileCompletionPrompt';
 
 /**
  * Renders the common layout for the application, including the
@@ -16,6 +18,8 @@ export default function MainLayout() {
             <a href="#main-content" className="skip-link">Skip to main content</a>
             <ScrollToTop />
             <Header />
+            <Onboarding />
+            <ProfileCompletionPrompt />
             <main id="main-content">
                 <Outlet />
             </main>
