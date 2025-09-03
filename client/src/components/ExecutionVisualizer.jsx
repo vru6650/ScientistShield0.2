@@ -1,5 +1,5 @@
 // client/src/components/ExecutionVisualizer.jsx
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import * as d3 from 'd3';
 import LanguageSelector from './LanguageSelector';
@@ -37,9 +37,16 @@ export default function ExecutionVisualizer() {
     const monacoRef = useRef(null);
     const decorationsRef = useRef([]);
 
+    // Load code from localStorage when language changes
     useEffect(() => {
-        setCode(defaultCodeSnippets[language]);
+        const stored = localStorage.getItem(`execvis_code_${language}`);
+        setCode(stored || defaultCodeSnippets[language]);
     }, [language]);
+
+    // Persist code changes per language
+    useEffect(() => {
+        localStorage.setItem(`execvis_code_${language}`, code);
+    }, [code, language]);
 
     useEffect(() => {
         const svg = d3.select(svgRef.current);
@@ -98,7 +105,7 @@ export default function ExecutionVisualizer() {
         );
     }, [currentStep, events]);
 
-    const runCode = async () => {
+    const runCode = useCallback(async () => {
         setError('');
         setEvents([]);
         setLogs([]);
@@ -135,6 +142,28 @@ export default function ExecutionVisualizer() {
         } finally {
             setIsRunning(false);
         }
+    }, [language, code]);
+
+    // Keyboard shortcut: Ctrl+Enter to run the code
+    useEffect(() => {
+        const handler = (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                runCode();
+            }
+        };
+        window.addEventListener('keydown', handler);
+        return () => window.removeEventListener('keydown', handler);
+    }, [runCode]);
+
+    const resetCode = () => {
+        setCode(defaultCodeSnippets[language]);
+        setEvents([]);
+        setLogs([]);
+        setOutput('');
+        setCurrentStep(-1);
+        setError('');
+        localStorage.removeItem(`execvis_code_${language}`);
     };
 
     return (
@@ -155,15 +184,24 @@ export default function ExecutionVisualizer() {
                 // Monaco may supply `undefined` when clearing the editor; coerce to empty string
                 onChange={(value) => setCode(value ?? '')}
             />
-            <button
-                onClick={runCode}
-                disabled={isRunning}
-                className={`px-4 py-2 rounded text-white ${
-                    isRunning ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-                }`}
-            >
-                {isRunning ? 'Running...' : 'Run'}
-            </button>
+            <div className="flex gap-2">
+                <button
+                    onClick={runCode}
+                    disabled={isRunning}
+                    className={`px-4 py-2 rounded text-white ${
+                        isRunning ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
+                >
+                    {isRunning ? 'Running...' : 'Run'}
+                </button>
+                <button
+                    onClick={resetCode}
+                    className="px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600"
+                    disabled={isRunning}
+                >
+                    Reset Code
+                </button>
+            </div>
             {error && <div className="text-red-500">{error}</div>}
             {events.length > 0 && (
                 <div className="space-y-2">

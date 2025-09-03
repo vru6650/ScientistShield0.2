@@ -7,7 +7,9 @@ export default function CodeVisualizer() {
             <div className="max-w-4xl mx-auto">
                 <h1 className="text-3xl font-bold mb-2">Code Visualizer</h1>
                 <p className="mb-4 text-gray-600 dark:text-gray-300">
-                    Write code and visualize its execution step by step.
+                    Write code and visualize its execution step by step. Press
+                    <kbd className="px-1">Ctrl</kbd>+<kbd className="px-1">Enter</kbd> to run or use the
+                    reset button to restore the default snippet.
                 </p>
                 <ExecutionVisualizer />
             </div>
