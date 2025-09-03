@@ -39,6 +39,7 @@ function CommandMenu({ isOpen, onClose }) {
   const quickLinks = [
     { label: 'Profile', path: '/dashboard?tab=profile' },
     { label: 'Create a Post', path: '/create-post' },
+    { label: 'Code Visualizer', path: '/visualizer' },
   ];
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -84,6 +85,7 @@ const navLinks = [
   { label: 'Tutorials', path: '/tutorials', id: 'tutorial-link' },
   { label: 'Quizzes', path: '/quizzes', id: 'quiz-link' },
   { label: 'Code Editor', path: '/tryit', id: 'editor-link' },
+  // Direct link to the execution visualizer page
   { label: 'Code Visualizer', path: '/visualizer', id: 'visualizer-link' },
   { label: 'Projects', path: '/projects' },
   { label: 'About', path: '/about' },
