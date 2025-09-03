@@ -35,6 +35,7 @@ const UpdateQuiz = lazy(() => import('./pages/UpdateQuiz'));
 
 // NEW: Lazy load the Try it Yourself page
 const TryItPage = lazy(() => import('./pages/TryItPage'));
+const CodeVisualizer = lazy(() => import('./pages/CodeVisualizer'));
 
 // A fallback component to show while pages are loading
 const LoadingFallback = () => (
@@ -66,6 +67,7 @@ export default function App() {
 
                         {/* NEW: Try It Yourself Route */}
                         <Route path="tryit" element={<TryItPage />} />
+                        <Route path="visualizer" element={<CodeVisualizer />} />
 
                         {/* Private Routes also use the main layout */}
                         <Route element={<PrivateRoute />}>
