@@ -1,7 +1,7 @@
 // client/src/components/CodeEditor.jsx
 import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Button, ToggleSwitch, Alert, Select } from 'flowbite-react';
+import { Button, ToggleSwitch, Alert, Select, Dropdown } from 'flowbite-react';
 import { useSelector } from 'react-redux';
 import {
     FaPlay,
@@ -582,47 +582,32 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             <FaRedo className="mr-2 h-4 w-4" /> Reset
                         </Button>
                     </motion.div>
-                      <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                      >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={copyCurrentCode} title="Copy Code">
-                              <FaCopy className="mr-2 h-4 w-4" /> Copy Code
-                          </Button>
-                      </motion.div>
-                      <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                      >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={formatCode} title="Format Code (Ctrl+Shift+F)">
-                              <FaMagic className="mr-2 h-4 w-4" /> Format
-                          </Button>
-                      </motion.div>
-                      <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                      >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving} title="Save & Share (Ctrl+S)">
-                              <FaSave className="mr-2 h-4 w-4" /> Save & Share
-                          </Button>
-                      </motion.div>
                     <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                     >
-                        <Button
-                            outline
-                            gradientDuoTone="purpleToBlue"
-                            onClick={() => setIsFullScreen(!isFullScreen)}
-                            title={isFullScreen ? 'Exit full screen' : 'Full screen'}
-                        >
-                            {isFullScreen ? (
-                                <FaCompress className="mr-2 h-4 w-4" />
-                            ) : (
-                                <FaExpand className="mr-2 h-4 w-4" />
-                            )}
-                            {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+                        <Button outline gradientDuoTone="purpleToBlue" onClick={copyCurrentCode} title="Copy Code">
+                            <FaCopy className="mr-2 h-4 w-4" /> Copy Code
                         </Button>
+                    </motion.div>
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                    >
+                        <Dropdown label="Options" inline>
+                            <Dropdown.Item icon={FaMagic} onClick={formatCode}>
+                                Format
+                            </Dropdown.Item>
+                            <Dropdown.Item icon={FaSave} onClick={saveSnippet} disabled={isSaving}>
+                                Save &amp; Share
+                            </Dropdown.Item>
+                            <Dropdown.Item
+                                icon={isFullScreen ? FaCompress : FaExpand}
+                                onClick={() => setIsFullScreen(!isFullScreen)}
+                            >
+                                {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+                            </Dropdown.Item>
+                        </Dropdown>
                     </motion.div>
                     {expectedOutput && (
                         <motion.div
