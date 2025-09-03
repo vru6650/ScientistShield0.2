@@ -33,7 +33,10 @@ export const signup = async (req, res, next) => {
       password: hashedPassword,
     });
     await newUser.save();
-    res.json('Signup successful');
+    // Return a 201 Created status to indicate that a new user resource was
+    // successfully created. This aligns the response with HTTP semantics and
+    // makes the behaviour consistent with other creation endpoints.
+    res.status(201).json('Signup successful');
   } catch (error) {
     next(error);
   }
