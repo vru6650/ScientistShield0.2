@@ -386,3 +386,8 @@ html {
   animation: fade-in-down 0.8s ease-out forwards;
   opacity: 0;
 }
+
+/* Highlight current execution line in the Monaco editor */
+.monaco-editor .highlight-line {
+  background-color: rgba(250, 204, 21, 0.4);
+}

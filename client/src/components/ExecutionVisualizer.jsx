@@ -24,9 +24,14 @@ export default function ExecutionVisualizer() {
     const [language, setLanguage] = useState('javascript');
     const [code, setCode] = useState(defaultCodeSnippets['javascript']);
     const [events, setEvents] = useState([]);
+    const [currentStep, setCurrentStep] = useState(-1);
     const [error, setError] = useState('');
     const [isRunning, setIsRunning] = useState(false);
+
     const svgRef = useRef(null);
+    const editorRef = useRef(null);
+    const monacoRef = useRef(null);
+    const decorationsRef = useRef([]);
 
     useEffect(() => {
         setCode(defaultCodeSnippets[language]);
@@ -48,9 +53,27 @@ export default function ExecutionVisualizer() {
         });
     }, [events]);
 
+    useEffect(() => {
+        if (!editorRef.current || !monacoRef.current) return;
+        const monaco = monacoRef.current;
+        const line = events[currentStep]?.line;
+        decorationsRef.current = editorRef.current.deltaDecorations(
+            decorationsRef.current,
+            line
+                ? [
+                      {
+                          range: new monaco.Range(line, 1, line, 1),
+                          options: { isWholeLine: true, className: 'highlight-line' },
+                      },
+                  ]
+                : []
+        );
+    }, [currentStep, events]);
+
     const runCode = async () => {
         setError('');
         setEvents([]);
+        setCurrentStep(-1);
         setIsRunning(true);
         try {
             const res = await fetch('/api/execute', {
@@ -60,8 +83,6 @@ export default function ExecutionVisualizer() {
             });
             const data = await res.json();
 
-            // If the response is not ok or the backend flagged an error,
-            // surface a meaningful message to the user and stop processing.
             if (!res.ok || data.error) {
                 const errorMsg =
                     data.message ||
@@ -71,7 +92,9 @@ export default function ExecutionVisualizer() {
                 return;
             }
 
-            setEvents(data.events || []);
+            const ev = data.events || [];
+            setEvents(ev);
+            setCurrentStep(ev.length > 0 ? 0 : -1);
         } catch (e) {
             setError('Network error');
         } finally {
@@ -81,28 +104,67 @@ export default function ExecutionVisualizer() {
 
     return (
         <div className="space-y-4">
-            <LanguageSelector selectedLanguage={language} setSelectedLanguage={setLanguage} languages={['javascript','python']} />
+            <LanguageSelector
+                selectedLanguage={language}
+                setSelectedLanguage={setLanguage}
+                languages={['javascript', 'python']}
+            />
             <Editor
                 height="40vh"
                 language={language}
                 value={code}
+                onMount={(editor, monaco) => {
+                    editorRef.current = editor;
+                    monacoRef.current = monaco;
+                }}
                 // Monaco may supply `undefined` when clearing the editor; coerce to empty string
                 onChange={(value) => setCode(value ?? '')}
             />
             <button
                 onClick={runCode}
                 disabled={isRunning}
-                className={`px-4 py-2 rounded text-white ${isRunning ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'}`}
+                className={`px-4 py-2 rounded text-white ${
+                    isRunning ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
+                }`}
             >
                 {isRunning ? 'Running...' : 'Run'}
             </button>
             {error && <div className="text-red-500">{error}</div>}
-            <div className="relative p-4 bg-white dark:bg-gray-800 rounded shadow min-h-[120px]">
+            {events.length > 0 && (
+                <div className="flex space-x-2">
+                    <button
+                        onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
+                        disabled={currentStep <= 0}
+                        className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
+                    >
+                        Prev
+                    </button>
+                    <button
+                        onClick={() => setCurrentStep((s) => Math.min(events.length - 1, s + 1))}
+                        disabled={currentStep >= events.length - 1}
+                        className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
+                    >
+                        Next
+                    </button>
+                </div>
+            )}
+            <div className="relative p-4 bg-white dark:bg-gray-800 rounded shadow min-h-[120px] space-y-2">
                 {events.length === 0 && !isRunning && (
                     <p className="text-gray-500">Run the code to see execution steps.</p>
+                )}
+                {currentStep >= 0 && events[currentStep] && (
+                    <div>
+                        <p className="font-semibold">
+                            Step {currentStep + 1} of {events.length} (line {events[currentStep].line})
+                        </p>
+                        <pre className="text-sm bg-gray-100 p-2 rounded">
+                            <code>{JSON.stringify(events[currentStep].locals || {}, null, 2)}</code>
+                        </pre>
+                    </div>
                 )}
                 <svg ref={svgRef} className="w-full"></svg>
             </div>
         </div>
     );
 }
+
