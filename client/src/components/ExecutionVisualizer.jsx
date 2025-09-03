@@ -37,9 +37,18 @@ export default function ExecutionVisualizer() {
                 body: JSON.stringify({ language, code }),
             });
             const data = await res.json();
-            if (data.error) {
-                setError(data.message || 'Execution error');
+
+            // If the response is not ok or the backend flagged an error,
+            // surface a meaningful message to the user and stop processing.
+            if (!res.ok || data.error) {
+                const errorMsg =
+                    data.message ||
+                    data.events?.find((e) => e.event === 'error')?.message ||
+                    'Execution error';
+                setError(errorMsg);
+                return;
             }
+
             setEvents(data.events || []);
         } catch (e) {
             setError('Network error');
@@ -53,7 +62,8 @@ export default function ExecutionVisualizer() {
                 height="40vh"
                 language={language}
                 value={code}
-                onChange={(value) => setCode(value)}
+                // Monaco may supply `undefined` when clearing the editor; coerce to empty string
+                onChange={(value) => setCode(value ?? '')}
             />
             <button
                 onClick={runCode}
