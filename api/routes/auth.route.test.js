@@ -46,7 +46,9 @@ describe('Auth routes', () => {
       .post('/api/auth/signup')
       .send({ username: 'test', email: 'test@example.com', password: 'password' });
 
-    expect(res.status).toBe(200);
+    // The signup route now returns a 201 Created to signal a new user was
+    // successfully registered.
+    expect(res.status).toBe(201);
     expect(res.body).toBe('Signup successful');
     expect(User.prototype.save).toHaveBeenCalledTimes(1);
   });
