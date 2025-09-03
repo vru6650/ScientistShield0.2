@@ -3,7 +3,28 @@ import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
 import { Button, ToggleSwitch, Alert, Select } from 'flowbite-react';
 import { useSelector } from 'react-redux';
-import { FaPlay, FaRedo, FaChevronRight, FaChevronDown, FaTerminal, FaSave, FaEye, FaEyeSlash, FaExpand, FaCompress, FaCopy, FaMagic, FaPlus, FaTrash } from 'react-icons/fa';
+import {
+    FaPlay,
+    FaRedo,
+    FaChevronRight,
+    FaChevronDown,
+    FaTerminal,
+    FaSave,
+    FaEye,
+    FaEyeSlash,
+    FaExpand,
+    FaCompress,
+    FaCopy,
+    FaMagic,
+    FaPlus,
+    FaTimes,
+    FaHtml5,
+    FaCss3Alt,
+    FaJs,
+    FaPython,
+    FaFileCode,
+} from 'react-icons/fa';
+import { SiCplusplus } from 'react-icons/si';
 import { motion, AnimatePresence } from 'framer-motion';
 import PropTypes from 'prop-types';
 
@@ -73,10 +94,10 @@ const suggestions = {
     ],
 };
 
-let isAutocompleteRegistered = false;
-const registerAutocompletion = (monaco) => {
-    if (isAutocompleteRegistered) return;
-    isAutocompleteRegistered = true;
+let monacoInitialized = false;
+const initializeMonaco = (monaco) => {
+    if (monacoInitialized) return;
+    monacoInitialized = true;
 
     Object.entries(suggestions).forEach(([lang, items]) => {
         monaco.languages.registerCompletionItemProvider(lang, {
@@ -92,10 +113,67 @@ const registerAutocompletion = (monaco) => {
             }),
         });
     });
+
+    monaco.editor.defineTheme('jetbrains-dark', {
+        base: 'vs-dark',
+        inherit: true,
+        rules: [
+            { token: '', foreground: 'A9B7C6', background: '2B2B2B' },
+            { token: 'comment', foreground: '808080' },
+            { token: 'keyword', foreground: 'CC7832' },
+            { token: 'number', foreground: '6897BB' },
+            { token: 'string', foreground: '6A8759' },
+        ],
+        colors: {
+            'editor.background': '#2B2B2B',
+            'editor.foreground': '#A9B7C6',
+            'editorLineNumber.foreground': '#606366',
+            'editorCursor.foreground': '#FFFF00',
+            'editor.selectionBackground': '#214283',
+            'editor.inactiveSelectionBackground': '#21428399',
+        },
+    });
+
+    monaco.editor.defineTheme('jetbrains-light', {
+        base: 'vs',
+        inherit: true,
+        rules: [
+            { token: '', foreground: '000000', background: 'FFFFFF' },
+            { token: 'comment', foreground: '808080' },
+            { token: 'keyword', foreground: '0000FF' },
+            { token: 'number', foreground: '098658' },
+            { token: 'string', foreground: 'A31515' },
+        ],
+        colors: {
+            'editor.background': '#FFFFFF',
+            'editor.foreground': '#000000',
+            'editorLineNumber.foreground': '#A0A0A0',
+            'editorCursor.foreground': '#000000',
+            'editor.selectionBackground': '#ADD6FF',
+            'editor.inactiveSelectionBackground': '#E5EBF1',
+        },
+    });
 };
 
 export default function CodeEditor({ initialCode = {}, language = 'html', expectedOutput = '' }) {
     const { theme } = useSelector((state) => state.theme);
+
+    const getFileIcon = (lang) => {
+        switch (lang) {
+            case 'html':
+                return <FaHtml5 className="text-orange-500" />;
+            case 'css':
+                return <FaCss3Alt className="text-blue-500" />;
+            case 'javascript':
+                return <FaJs className="text-yellow-400" />;
+            case 'python':
+                return <FaPython className="text-blue-400" />;
+            case 'cpp':
+                return <SiCplusplus className="text-blue-600" />;
+            default:
+                return <FaFileCode />;
+        }
+    };
 
     const createInitialFiles = () => [
         { id: 'html-1', name: 'index.html', language: 'html', code: initialCode.html || defaultCodes.html },
@@ -131,17 +209,18 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
         wordWrap: true,
         minimap: false,
         lineNumbers: true,
-        theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
+        theme: theme === 'dark' ? 'jetbrains-dark' : 'jetbrains-light',
     });
     const [showSettings, setShowSettings] = useState(false);
     const [editorWidth, setEditorWidth] = useState(50);
     const editorRef = useRef(null);
+    const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
 
     // Keep the Monaco editor theme in sync with the application theme
     useEffect(() => {
         setEditorOptions((prev) => ({
             ...prev,
-            theme: theme === 'dark' ? 'vs-dark' : 'vs-light',
+            theme: theme === 'dark' ? 'jetbrains-dark' : 'jetbrains-light',
         }));
     }, [theme]);
 
@@ -438,8 +517,10 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                             })
                                         }
                                     >
-                                        <option value="vs-light">Light</option>
-                                        <option value="vs-dark">Dark</option>
+                                        <option value="jetbrains-light">JetBrains Light</option>
+                                        <option value="jetbrains-dark">JetBrains Dark</option>
+                                        <option value="vs-light">VS Light</option>
+                                        <option value="vs-dark">VS Dark</option>
                                         <option value="hc-black">High Contrast</option>
                                     </Select>
                                 </div>
@@ -583,22 +664,25 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                     onClick={() => setSelectedFileId(file.id)}
                                     className={`flex items-center px-3 py-1 rounded-t-md cursor-pointer text-sm whitespace-nowrap transition-colors ${
                                         selectedFileId === file.id
-                                            ? 'bg-purple-200 dark:bg-purple-600 text-gray-900 dark:text-white'
-                                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                            ? 'bg-gray-300 dark:bg-gray-700 text-gray-900 dark:text-white'
+                                            : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
                                     }`}
                                 >
-                                    <span className="mr-2">{file.name}</span>
+                                    <span className="mr-2 flex items-center gap-1">
+                                        {getFileIcon(file.language)}
+                                        {file.name}
+                                    </span>
                                     {files.length > 1 && (
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 deleteFile(file.id);
                                             }}
-                                            className="text-red-500 hover:text-red-700"
-                                            title="Delete file"
-                                            aria-label="Delete file"
+                                            className="text-gray-500 hover:text-red-600"
+                                            title="Close file"
+                                            aria-label="Close file"
                                         >
-                                            <FaTrash />
+                                            <FaTimes />
                                         </button>
                                     )}
                                 </div>
@@ -612,10 +696,16 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                 <FaPlus />
                             </button>
                         </div>
-                        <div className="flex-1 rounded-md overflow-hidden">
+                        <div className="flex-1 rounded-md overflow-hidden flex flex-col">
                             <Editor
-                                beforeMount={registerAutocompletion}
-                                onMount={(editor) => (editorRef.current = editor)}
+                                className="flex-1"
+                                beforeMount={initializeMonaco}
+                                onMount={(editor) => {
+                                    editorRef.current = editor;
+                                    editor.onDidChangeCursorPosition((e) =>
+                                        setCursorPosition({ line: e.position.lineNumber, column: e.position.column })
+                                    );
+                                }}
                                 height="100%"
                                 language={selectedLanguage}
                                 value={selectedFile.code}
@@ -635,6 +725,12 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                     suggestOnTriggerCharacters: true,
                                 }}
                             />
+                            <div className="px-2 py-1 bg-gray-200 dark:bg-gray-900 text-xs font-mono flex justify-between text-gray-700 dark:text-gray-300">
+                                <span>{selectedFile.name}</span>
+                                <span>
+                                    Ln {cursorPosition.line}, Col {cursorPosition.column}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
