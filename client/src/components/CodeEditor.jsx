@@ -575,50 +575,42 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                     className="flex-1 flex flex-col rounded-md shadow-inner bg-white dark:bg-gray-800 p-2"
                     style={{ width: showOutputPanel ? `${editorWidth}%` : '100%' }}
                 >
-                    <div className="flex h-full">
-                        <div
-                            className="resize-x overflow-auto bg-gray-100 dark:bg-gray-700 rounded-md p-2 mr-2"
-                            style={{ minWidth: '150px' }}
-                        >
-                            <div className="flex justify-between items-center mb-2">
-                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">Files</span>
-                                <button
-                                    onClick={addFile}
-                                    className="text-blue-500 hover:text-blue-700"
-                                    title="Add file"
-                                    aria-label="Add file"
+                    <div className="flex flex-col h-full">
+                        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-2 border-b border-gray-200 dark:border-gray-700">
+                            {files.map((file) => (
+                                <div
+                                    key={file.id}
+                                    onClick={() => setSelectedFileId(file.id)}
+                                    className={`flex items-center px-3 py-1 rounded-t-md cursor-pointer text-sm whitespace-nowrap transition-colors ${
+                                        selectedFileId === file.id
+                                            ? 'bg-purple-200 dark:bg-purple-600 text-gray-900 dark:text-white'
+                                            : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                    }`}
                                 >
-                                    <FaPlus />
-                                </button>
-                            </div>
-                            <ul className="text-sm space-y-1">
-                                {files.map((file) => (
-                                    <li
-                                        key={file.id}
-                                        onClick={() => setSelectedFileId(file.id)}
-                                        className={`flex items-center justify-between px-2 py-1 rounded cursor-pointer ${
-                                            selectedFileId === file.id
-                                                ? 'bg-purple-200 dark:bg-purple-600 text-gray-900 dark:text-white'
-                                                : 'hover:bg-gray-200 dark:hover:bg-gray-600'
-                                        }`}
-                                    >
-                                        <span>{file.name}</span>
-                                        {files.length > 1 && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteFile(file.id);
-                                                }}
-                                                className="text-red-500 hover:text-red-700"
-                                                title="Delete file"
-                                                aria-label="Delete file"
-                                            >
-                                                <FaTrash />
-                                            </button>
-                                        )}
-                                    </li>
-                                ))}
-                            </ul>
+                                    <span className="mr-2">{file.name}</span>
+                                    {files.length > 1 && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                deleteFile(file.id);
+                                            }}
+                                            className="text-red-500 hover:text-red-700"
+                                            title="Delete file"
+                                            aria-label="Delete file"
+                                        >
+                                            <FaTrash />
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                            <button
+                                onClick={addFile}
+                                className="flex items-center px-3 py-1 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
+                                title="Add file"
+                                aria-label="Add file"
+                            >
+                                <FaPlus />
+                            </button>
                         </div>
                         <div className="flex-1 rounded-md overflow-hidden">
                             <Editor
