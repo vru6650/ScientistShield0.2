@@ -84,6 +84,7 @@ const navLinks = [
   { label: 'Tutorials', path: '/tutorials', id: 'tutorial-link' },
   { label: 'Quizzes', path: '/quizzes', id: 'quiz-link' },
   { label: 'Code Editor', path: '/tryit', id: 'editor-link' },
+  { label: 'Code Visualizer', path: '/visualizer', id: 'visualizer-link' },
   { label: 'Projects', path: '/projects' },
   { label: 'About', path: '/about' },
 ];
