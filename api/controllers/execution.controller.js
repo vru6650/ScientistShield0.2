@@ -6,9 +6,11 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { errorHandler } from '../utils/error.js';
 import { parse } from '@babel/parser';
-import traverse from '@babel/traverse';
+import traverseModule from '@babel/traverse';
 import generate from '@babel/generator';
 import * as t from '@babel/types';
+
+const traverse = traverseModule.default ?? traverseModule;
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.resolve();
