@@ -24,6 +24,8 @@ export default function ExecutionVisualizer() {
     const [language, setLanguage] = useState('javascript');
     const [code, setCode] = useState(defaultCodeSnippets['javascript']);
     const [events, setEvents] = useState([]);
+    const [logs, setLogs] = useState([]);
+    const [output, setOutput] = useState('');
     const [currentStep, setCurrentStep] = useState(-1);
     const [error, setError] = useState('');
     const [isRunning, setIsRunning] = useState(false);
@@ -45,6 +47,7 @@ export default function ExecutionVisualizer() {
         svg.attr('width', width).attr('height', height);
         const g = svg.append('g');
         events.forEach((e, i) => {
+            if (typeof e.line !== 'number') return;
             g.append('text')
                 .attr('x', 10)
                 .attr('y', 20 + i * 30)
@@ -73,6 +76,8 @@ export default function ExecutionVisualizer() {
     const runCode = async () => {
         setError('');
         setEvents([]);
+        setLogs([]);
+        setOutput('');
         setCurrentStep(-1);
         setIsRunning(true);
         try {
@@ -93,8 +98,12 @@ export default function ExecutionVisualizer() {
             }
 
             const ev = data.events || [];
-            setEvents(ev);
-            setCurrentStep(ev.length > 0 ? 0 : -1);
+            const stepEvents = ev.filter((e) => e.event !== 'log');
+            const logEvents = ev.filter((e) => e.event === 'log');
+            setEvents(stepEvents);
+            setLogs(logEvents);
+            setOutput(data.output || '');
+            setCurrentStep(stepEvents.length > 0 ? 0 : -1);
         } catch (e) {
             setError('Network error');
         } finally {
@@ -164,6 +173,28 @@ export default function ExecutionVisualizer() {
                 )}
                 <svg ref={svgRef} className="w-full"></svg>
             </div>
+            {(output || logs.length > 0) && (
+                <div className="p-4 bg-white dark:bg-gray-800 rounded shadow space-y-2">
+                    {output && (
+                        <div>
+                            <p className="font-semibold">Output</p>
+                            <pre className="text-sm bg-gray-100 p-2 rounded whitespace-pre-wrap">
+                                <code>{output}</code>
+                            </pre>
+                        </div>
+                    )}
+                    {logs.length > 0 && (
+                        <div>
+                            <p className="font-semibold">Console</p>
+                            <pre className="text-sm bg-gray-100 p-2 rounded whitespace-pre-wrap">
+                                {logs.map((l, i) => (
+                                    <div key={i}>{l.value}</div>
+                                ))}
+                            </pre>
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
