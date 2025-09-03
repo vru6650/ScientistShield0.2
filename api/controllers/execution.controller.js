@@ -5,20 +5,49 @@ import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { errorHandler } from '../utils/error.js';
+import { parse } from '@babel/parser';
+import traverse from '@babel/traverse';
+import generate from '@babel/generator';
+import * as t from '@babel/types';
 
 const execFileAsync = promisify(execFile);
 const __dirname = path.resolve();
 const TEMP_DIR = path.join(__dirname, 'temp');
 
-function instrumentJavaScript(code) {
-    const lines = code.split('\n');
-    const instrumented = lines
-        .map((line, idx) => {
-            const ln = idx + 1;
-            const sanitized = line.replace(/\b(let|const)\b/g, 'var');
-            return `__trace(${ln});\n${sanitized}`;
-        })
-        .join('\n');
+export function instrumentJavaScript(code) {
+    const ast = parse(code, {
+        sourceType: 'script',
+        allowReturnOutsideFunction: true,
+        allowAwaitOutsideFunction: true,
+        plugins: [],
+    });
+
+    traverse(ast, {
+        enter(path) {
+            if (path.isVariableDeclaration()) {
+                if (path.node.kind === 'let' || path.node.kind === 'const') {
+                    path.node.kind = 'var';
+                }
+            }
+
+            if (path.isStatement() && !path.isBlockStatement()) {
+                if (
+                    path.isExpressionStatement() &&
+                    t.isCallExpression(path.node.expression) &&
+                    t.isIdentifier(path.node.expression.callee, { name: '__trace' })
+                ) {
+                    return;
+                }
+                const line = path.node.loc?.start?.line ?? 0;
+                const traceNode = t.expressionStatement(
+                    t.callExpression(t.identifier('__trace'), [t.numericLiteral(line)])
+                );
+                path.insertBefore(traceNode);
+            }
+        },
+    });
+
+    const { code: instrumented } = generate(ast, { comments: true, retainLines: true });
     return `(async () => { with (sandbox) {\n${instrumented}\n}})()`;
 }
 
