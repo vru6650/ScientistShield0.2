@@ -1,7 +1,7 @@
 // client/src/components/CodeEditor.jsx
 import { useState, useEffect, useRef } from 'react';
 import Editor from '@monaco-editor/react';
-import { Button, ToggleSwitch, Alert, Select } from 'flowbite-react';
+import { Button, ToggleSwitch, Alert, Select, Tooltip } from 'flowbite-react';
 import { useSelector } from 'react-redux';
 import {
     FaPlay,
@@ -30,6 +30,19 @@ import PropTypes from 'prop-types';
 
 import LanguageSelector from './LanguageSelector';
 import TerminalPane from './TerminalPane';
+
+const ActionButton = ({ tooltip, children, ...props }) => (
+    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+        <Tooltip content={tooltip} placement="bottom">
+            <Button {...props}>{children}</Button>
+        </Tooltip>
+    </motion.div>
+);
+
+ActionButton.propTypes = {
+    tooltip: PropTypes.string.isRequired,
+    children: PropTypes.node.isRequired,
+};
 
 const defaultCodes = {
     html: `<!DOCTYPE html>\n<html>\n<body>\n\n  <h1>Try It Yourself</h1>\n  <p>Edit the code below and see the output.</p>\n\n</body>\n</html>`,
@@ -560,89 +573,76 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                             />
                         </div>
                     )}
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                    <ActionButton
+                        tooltip="Run Code (Ctrl+Enter)"
+                        gradientDuoTone="purpleToBlue"
+                        onClick={runCode}
+                        isProcessing={isRunning}
+                        disabled={isRunning}
                     >
-                        <Button
-                            gradientDuoTone="purpleToBlue"
-                            onClick={runCode}
-                            isProcessing={isRunning}
-                            disabled={isRunning}
-                            title="Run Code (Ctrl+Enter)"
-                        >
-                            <FaPlay className="mr-2 h-4 w-4" /> Run Code
-                        </Button>
-                    </motion.div>
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        <FaPlay className="mr-2 h-4 w-4" /> Run Code
+                    </ActionButton>
+                    <ActionButton
+                        tooltip="Reset code"
+                        outline
+                        gradientDuoTone="pinkToOrange"
+                        onClick={resetCode}
                     >
-                        <Button outline gradientDuoTone="pinkToOrange" onClick={resetCode} title="Reset code">
-                            <FaRedo className="mr-2 h-4 w-4" /> Reset
-                        </Button>
-                    </motion.div>
-                      <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                      >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={copyCurrentCode} title="Copy Code">
-                              <FaCopy className="mr-2 h-4 w-4" /> Copy Code
-                          </Button>
-                      </motion.div>
-                      <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                      >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={formatCode} title="Format Code (Ctrl+Shift+F)">
-                              <FaMagic className="mr-2 h-4 w-4" /> Format
-                          </Button>
-                      </motion.div>
-                      <motion.div
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                      >
-                          <Button outline gradientDuoTone="purpleToBlue" onClick={saveSnippet} isProcessing={isSaving} disabled={isSaving} title="Save & Share (Ctrl+S)">
-                              <FaSave className="mr-2 h-4 w-4" /> Save & Share
-                          </Button>
-                      </motion.div>
-                    <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        <FaRedo className="mr-2 h-4 w-4" /> Reset
+                    </ActionButton>
+                    <ActionButton
+                        tooltip="Copy Code"
+                        outline
+                        gradientDuoTone="purpleToBlue"
+                        onClick={copyCurrentCode}
                     >
-                        <Button
-                            outline
-                            gradientDuoTone="purpleToBlue"
-                            onClick={() => setIsFullScreen(!isFullScreen)}
-                            title={isFullScreen ? 'Exit full screen' : 'Full screen'}
-                        >
-                            {isFullScreen ? (
-                                <FaCompress className="mr-2 h-4 w-4" />
-                            ) : (
-                                <FaExpand className="mr-2 h-4 w-4" />
-                            )}
-                            {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
-                        </Button>
-                    </motion.div>
+                        <FaCopy className="mr-2 h-4 w-4" /> Copy Code
+                    </ActionButton>
+                    <ActionButton
+                        tooltip="Format Code (Ctrl+Shift+F)"
+                        outline
+                        gradientDuoTone="purpleToBlue"
+                        onClick={formatCode}
+                    >
+                        <FaMagic className="mr-2 h-4 w-4" /> Format
+                    </ActionButton>
+                    <ActionButton
+                        tooltip="Save & Share (Ctrl+S)"
+                        outline
+                        gradientDuoTone="purpleToBlue"
+                        onClick={saveSnippet}
+                        isProcessing={isSaving}
+                        disabled={isSaving}
+                    >
+                        <FaSave className="mr-2 h-4 w-4" /> Save & Share
+                    </ActionButton>
+                    <ActionButton
+                        tooltip={isFullScreen ? 'Exit full screen' : 'Full screen'}
+                        outline
+                        gradientDuoTone="purpleToBlue"
+                        onClick={() => setIsFullScreen(!isFullScreen)}
+                    >
+                        {isFullScreen ? (
+                            <FaCompress className="mr-2 h-4 w-4" />
+                        ) : (
+                            <FaExpand className="mr-2 h-4 w-4" />
+                        )}
+                        {isFullScreen ? 'Exit Full Screen' : 'Full Screen'}
+                    </ActionButton>
                     {expectedOutput && (
-                        <motion.div
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
+                        <ActionButton
+                            tooltip={showAnswer ? 'Hide answer' : 'Show answer'}
+                            outline
+                            gradientDuoTone="greenToBlue"
+                            onClick={() => setShowAnswer(!showAnswer)}
                         >
-                            <Button
-                                outline
-                                gradientDuoTone="greenToBlue"
-                                onClick={() => setShowAnswer(!showAnswer)}
-                                title={showAnswer ? 'Hide answer' : 'Show answer'}
-                            >
-                                {showAnswer ? (
-                                    <FaEyeSlash className="mr-2 h-4 w-4" />
-                                ) : (
-                                    <FaEye className="mr-2 h-4 w-4" />
-                                )}
-                                {showAnswer ? 'Hide Answer' : 'Show Answer'}
-                            </Button>
-                        </motion.div>
+                            {showAnswer ? (
+                                <FaEyeSlash className="mr-2 h-4 w-4" />
+                            ) : (
+                                <FaEye className="mr-2 h-4 w-4" />
+                            )}
+                            {showAnswer ? 'Hide Answer' : 'Show Answer'}
+                        </ActionButton>
                     )}
                 </div>
             </div>
@@ -673,28 +673,30 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                         {file.name}
                                     </span>
                                     {files.length > 1 && (
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteFile(file.id);
-                                            }}
-                                            className="text-gray-500 hover:text-red-600"
-                                            title="Close file"
-                                            aria-label="Close file"
-                                        >
-                                            <FaTimes />
-                                        </button>
+                                        <Tooltip content="Close file" placement="bottom">
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    deleteFile(file.id);
+                                                }}
+                                                className="text-gray-500 hover:text-red-600"
+                                                aria-label="Close file"
+                                            >
+                                                <FaTimes />
+                                            </button>
+                                        </Tooltip>
                                     )}
                                 </div>
                             ))}
-                            <button
-                                onClick={addFile}
-                                className="flex items-center px-3 py-1 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
-                                title="Add file"
-                                aria-label="Add file"
-                            >
-                                <FaPlus />
-                            </button>
+                            <Tooltip content="Add file" placement="bottom">
+                                <button
+                                    onClick={addFile}
+                                    className="flex items-center px-3 py-1 rounded-md bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600"
+                                    aria-label="Add file"
+                                >
+                                    <FaPlus />
+                                </button>
+                            </Tooltip>
                         </div>
                         <div className="flex-1 rounded-md overflow-hidden flex flex-col">
                             <Editor
@@ -759,17 +761,18 @@ export default function CodeEditor({ initialCode = {}, language = 'html', expect
                                             whileHover={{ scale: 1.1 }}
                                             whileTap={{ scale: 0.9 }}
                                         >
-                                            <Button
-                                                size="xs"
-                                                outline
-                                                gradientDuoTone="purpleToBlue"
-                                                onClick={() => isLivePreviewLanguage && setShowOutputPanel(!showOutputPanel)}
-                                                disabled={!isLivePreviewLanguage}
-                                                title={showOutputPanel ? 'Collapse output panel' : 'Expand output panel'}
-                                                aria-label={showOutputPanel ? 'Collapse output panel' : 'Expand output panel'}
-                                            >
-                                                {showOutputPanel ? <FaChevronDown /> : <FaChevronRight />}
-                                            </Button>
+                                            <Tooltip content={showOutputPanel ? 'Collapse output panel' : 'Expand output panel'} placement="bottom">
+                                                <Button
+                                                    size="xs"
+                                                    outline
+                                                    gradientDuoTone="purpleToBlue"
+                                                    onClick={() => isLivePreviewLanguage && setShowOutputPanel(!showOutputPanel)}
+                                                    disabled={!isLivePreviewLanguage}
+                                                    aria-label={showOutputPanel ? 'Collapse output panel' : 'Expand output panel'}
+                                                >
+                                                    {showOutputPanel ? <FaChevronDown /> : <FaChevronRight />}
+                                                </Button>
+                                            </Tooltip>
                                         </motion.div>
                                     </div>
                                 )}
