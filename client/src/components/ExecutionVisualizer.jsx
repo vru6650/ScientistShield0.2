@@ -29,6 +29,8 @@ export default function ExecutionVisualizer() {
     const [currentStep, setCurrentStep] = useState(-1);
     const [error, setError] = useState('');
     const [isRunning, setIsRunning] = useState(false);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [playSpeed, setPlaySpeed] = useState(800);
 
     const svgRef = useRef(null);
     const editorRef = useRef(null);
@@ -42,19 +44,42 @@ export default function ExecutionVisualizer() {
     useEffect(() => {
         const svg = d3.select(svgRef.current);
         svg.selectAll('*').remove();
-        const width = svgRef.current ? svgRef.current.clientWidth : 600;
-        const height = events.length * 30 + 20;
+        if (events.length === 0) return;
+        const stepWidth = 40;
+        const width = events.length * stepWidth + 20;
+        const height = 60;
         svg.attr('width', width).attr('height', height);
-        const g = svg.append('g');
-        events.forEach((e, i) => {
-            if (typeof e.line !== 'number') return;
-            g.append('text')
-                .attr('x', 10)
-                .attr('y', 20 + i * 30)
-                .text(`L${e.line}: ${JSON.stringify(e.locals || {})}`)
-                .attr('font-size', '14px');
-        });
-    }, [events]);
+        const g = svg.append('g').attr('transform', `translate(10,${height / 2})`);
+        g.selectAll('circle')
+            .data(events)
+            .enter()
+            .append('circle')
+            .attr('cx', (_, i) => i * stepWidth)
+            .attr('r', 8)
+            .attr('fill', (_, i) => (i === currentStep ? '#9333ea' : '#bbb'))
+            .attr('stroke', '#333');
+        g.selectAll('text')
+            .data(events)
+            .enter()
+            .append('text')
+            .attr('x', (_, i) => i * stepWidth)
+            .attr('y', 20)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .text((e) => `L${e.line}`);
+    }, [events, currentStep]);
+
+    useEffect(() => {
+        if (!isPlaying) return;
+        if (currentStep >= events.length - 1) {
+            setIsPlaying(false);
+            return;
+        }
+        const id = setTimeout(() => {
+            setCurrentStep((s) => Math.min(events.length - 1, s + 1));
+        }, playSpeed);
+        return () => clearTimeout(id);
+    }, [isPlaying, currentStep, playSpeed, events.length]);
 
     useEffect(() => {
         if (!editorRef.current || !monacoRef.current) return;
@@ -80,6 +105,7 @@ export default function ExecutionVisualizer() {
         setOutput('');
         setCurrentStep(-1);
         setIsRunning(true);
+        setIsPlaying(false);
         try {
             const res = await fetch('/api/execute', {
                 method: 'POST',
@@ -140,21 +166,73 @@ export default function ExecutionVisualizer() {
             </button>
             {error && <div className="text-red-500">{error}</div>}
             {events.length > 0 && (
-                <div className="flex space-x-2">
-                    <button
-                        onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
-                        disabled={currentStep <= 0}
-                        className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
-                    >
-                        Prev
-                    </button>
-                    <button
-                        onClick={() => setCurrentStep((s) => Math.min(events.length - 1, s + 1))}
-                        disabled={currentStep >= events.length - 1}
-                        className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
-                    >
-                        Next
-                    </button>
+                <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                        <button
+                            onClick={() => {
+                                setIsPlaying(false);
+                                setCurrentStep((s) => Math.max(0, s - 1));
+                            }}
+                            disabled={currentStep <= 0}
+                            className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
+                        >
+                            Prev
+                        </button>
+                        <button
+                            onClick={() => {
+                                setIsPlaying((p) => {
+                                    if (!p && currentStep < 0 && events.length > 0) setCurrentStep(0);
+                                    return !p;
+                                });
+                            }}
+                            className="px-3 py-1 rounded bg-gray-300"
+                        >
+                            {isPlaying ? 'Pause' : 'Play'}
+                        </button>
+                        <button
+                            onClick={() => {
+                                setIsPlaying(false);
+                                setCurrentStep((s) => Math.min(events.length - 1, s + 1));
+                            }}
+                            disabled={currentStep >= events.length - 1}
+                            className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
+                        >
+                            Next
+                        </button>
+                        <button
+                            onClick={() => {
+                                setIsPlaying(false);
+                                setCurrentStep(0);
+                            }}
+                            className="px-3 py-1 rounded bg-gray-300"
+                        >
+                            Reset
+                        </button>
+                        <div className="flex items-center space-x-1 ml-4">
+                            <label className="text-sm">Speed</label>
+                            <input
+                                type="range"
+                                min="100"
+                                max="2000"
+                                step="100"
+                                value={playSpeed}
+                                onChange={(e) => setPlaySpeed(Number(e.target.value))}
+                                className="w-32"
+                            />
+                            <span className="text-xs">{playSpeed}ms</span>
+                        </div>
+                    </div>
+                    <input
+                        type="range"
+                        min={0}
+                        max={events.length - 1}
+                        value={currentStep}
+                        onChange={(e) => {
+                            setIsPlaying(false);
+                            setCurrentStep(Number(e.target.value));
+                        }}
+                        className="w-full"
+                    />
                 </div>
             )}
             <div className="relative p-4 bg-white dark:bg-gray-800 rounded shadow min-h-[120px] space-y-2">
