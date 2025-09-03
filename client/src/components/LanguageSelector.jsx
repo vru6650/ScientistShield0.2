@@ -2,9 +2,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-const languages = ['html', 'css', 'javascript', 'cpp', 'python'];
+const defaultLanguages = ['html', 'css', 'javascript', 'cpp', 'python'];
 
-export default function LanguageSelector({ selectedLanguage, setSelectedLanguage }) {
+export default function LanguageSelector({ selectedLanguage, setSelectedLanguage, languages = defaultLanguages }) {
     return (
         <motion.div
             layout
