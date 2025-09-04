@@ -35,6 +35,10 @@ export default function ExecutionVisualizer() {
     const [isRunning, setIsRunning] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     const [playSpeed, setPlaySpeed] = useState(800);
+    const [sessionId, setSessionId] = useState(null);
+    const [breakpoints, setBreakpoints] = useState(new Set());
+    const [callStack, setCallStack] = useState([]);
+    const [watchVars, setWatchVars] = useState({});
 
     const svgRef = useRef(null);
     const editorRef = useRef(null);
@@ -45,11 +49,17 @@ export default function ExecutionVisualizer() {
     useEffect(() => {
         const stored = localStorage.getItem(`execvis_code_${language}`);
         setCode(stored || defaultCodeSnippets[language]);
+        const bpStored = JSON.parse(localStorage.getItem(`execvis_bp_${language}`) || '[]');
+        setBreakpoints(new Set(bpStored));
     }, [language]);
 
     useEffect(() => {
         localStorage.setItem(`execvis_code_${language}`, code);
     }, [code, language]);
+
+    useEffect(() => {
+        localStorage.setItem(`execvis_bp_${language}`, JSON.stringify([...breakpoints]));
+    }, [breakpoints, language]);
 
     // Advanced D3.js Flowchart Rendering
     useEffect(() => {
@@ -222,32 +232,56 @@ export default function ExecutionVisualizer() {
         setIsRunning(true);
         setIsPlaying(false);
         try {
-            const res = await fetch('/api/execute', {
+            const res = await fetch('/api/debug/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ language, code }),
+                body: JSON.stringify({ language, code, breakpoints: [...breakpoints] }),
             });
             const data = await res.json();
-
             if (!res.ok || data.error) {
-                const errorMsg = data.message || data.events?.find((e) => e.event === 'error')?.message || 'Execution error';
-                setError(errorMsg);
+                setError(data.message || 'Execution error');
                 return;
             }
-
-            const ev = data.events || [];
-            const stepEvents = ev.filter((e) => e.event !== 'log');
-            const logEvents = ev.filter((e) => e.event === 'log');
-            setEvents(stepEvents);
-            setLogs(logEvents);
-            setOutput(data.output || '');
-            setCurrentStep(stepEvents.length > 0 ? 0 : -1);
+            setSessionId(data.sessionId);
         } catch (e) {
             setError('Network error');
         } finally {
             setIsRunning(false);
         }
-    }, [language, code]);
+    }, [language, code, breakpoints]);
+
+    const sendCommand = async (cmd, extra = {}) => {
+        if (!sessionId) return;
+        try {
+            const res = await fetch('/api/debug/command', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sessionId, command: cmd, ...extra }),
+            });
+            const data = await res.json();
+            if (data.event) {
+                setEvents((e) => [...e, data.event]);
+                setCurrentStep((s) => s + 1);
+                setCallStack(data.event.callStack || []);
+                setWatchVars(data.event.locals || {});
+            }
+        } catch (e) {
+            setError('Network error');
+        }
+    };
+
+    const handleStep = () => sendCommand('step');
+    const handleNext = () => sendCommand('next');
+    const handleOut = () => sendCommand('out');
+    const handleContinue = () => sendCommand('continue');
+    const toggleBreakpoint = (line) => {
+        setBreakpoints((prev) => {
+            const n = new Set(prev);
+            if (n.has(line)) n.delete(line); else n.add(line);
+            return n;
+        });
+        if (sessionId) sendCommand('setBreakpoint', { line });
+    };
 
     useEffect(() => {
         const handler = (e) => {
@@ -303,6 +337,13 @@ export default function ExecutionVisualizer() {
                     Reset Code
                 </button>
             </div>
+            <div className="flex gap-2 mt-2">
+                <button onClick={handleStep} disabled={!sessionId} className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50">Step In</button>
+                <button onClick={handleNext} disabled={!sessionId} className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50">Step Over</button>
+                <button onClick={handleOut} disabled={!sessionId} className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50">Step Out</button>
+                <button onClick={handleContinue} disabled={!sessionId} className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50">Continue</button>
+                <button onClick={() => toggleBreakpoint(1)} className="px-3 py-1 rounded bg-gray-300">Toggle BP 1</button>
+            </div>
             {error && <div className="text-red-500">{error}</div>}
             {events.length > 0 && (
                 <div className="space-y-2">
@@ -339,6 +380,16 @@ export default function ExecutionVisualizer() {
                     </div>
                 )}
                 <svg ref={svgRef}></svg>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                    <div data-testid="call-stack">
+                        <h4 className="font-semibold">Call Stack</h4>
+                        {callStack.map((c, i) => (<div key={i}>{c}</div>))}
+                    </div>
+                    <div data-testid="watch-vars">
+                        <h4 className="font-semibold">Watched Variables</h4>
+                        {Object.entries(watchVars).map(([k, v]) => (<div key={k}>{`${k}: ${v}`}</div>))}
+                    </div>
+                </div>
             </div>
             {(output || logs.length > 0) && (
                 <div className="p-4 bg-white dark:bg-gray-800 rounded shadow space-y-2">
