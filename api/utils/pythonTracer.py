@@ -5,16 +5,19 @@ import runpy
 
 traces = []
 
+
 def tracefunc(frame, event, arg):
-    if event in ('call', 'line', 'return'):
+    if event == 'line':
         traces.append({
-            'event': event,
+            'event': 'step',
             'line': frame.f_lineno,
-            'locals': {k: repr(v) for k, v in frame.f_locals.items()}
+            'locals': {k: repr(v) for k, v in frame.f_locals.items()},
         })
     return tracefunc
 
 def main(script_path):
+    global traces
+    traces = []
     with open(script_path, 'r') as f:
         code = f.read()
     stdout_buffer = io.StringIO()
