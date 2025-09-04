@@ -35,27 +35,41 @@ describe('ExecutionVisualizer', () => {
     expect(editor.value).toContain('function greet');
   });
 
-  test('shows expression evaluation step', async () => {
-    global.fetch = jest.fn(() =>
-      Promise.resolve({
+  test('step command updates call stack and variables', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ sessionId: '1' }) })
+      .mockResolvedValueOnce({
         ok: true,
-        json: () =>
-          Promise.resolve({
-            events: [
-              { event: 'expr', line: 1, expr: '2+2', value: '4', locals: {} },
-            ],
-            output: '',
-            error: false,
-          }),
-      })
-    );
+        json: async () => ({ event: { event: 'line', line: 1, locals: { a: 1 }, callStack: ['<module>'] } })
+      });
+    global.fetch = fetchMock;
     render(<ExecutionVisualizer />);
 
-    const runBtn = screen.getByText('Run');
-    fireEvent.click(runBtn);
+    fireEvent.click(screen.getByText('Run'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
+    fireEvent.click(screen.getByText('Step In'));
     await waitFor(() => {
-      expect(screen.getByTestId('expr-eval').textContent).toContain('2+2');
+      expect(screen.getByTestId('call-stack').textContent).toContain('<module>');
     });
+    expect(screen.getByTestId('watch-vars').textContent).toContain('a: 1');
+  });
+
+  test('toggle breakpoint persists and sends command', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ sessionId: '1' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ breakpoints: [1] }) });
+    global.fetch = fetchMock;
+    render(<ExecutionVisualizer />);
+
+    fireEvent.click(screen.getByText('Run'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByText('Toggle BP 1'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).command).toBe('setBreakpoint');
+    expect(localStorage.getItem('execvis_bp_javascript')).toContain('1');
   });
 });

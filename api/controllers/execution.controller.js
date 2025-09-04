@@ -17,6 +17,8 @@ const execFileAsync = promisify(execFile);
 const __dirname = path.resolve();
 const TEMP_DIR = path.join(__dirname, 'temp');
 
+const debugSessions = {};
+
 export function instrumentJavaScript(code) {
     const ast = parse(code, {
         sourceType: 'script',
@@ -106,4 +108,100 @@ export const executeCode = async (req, res, next) => {
     }
 
     return next(errorHandler(400, 'Unsupported language.'));
+};
+
+export const startDebugSession = async (req, res, next) => {
+    const { language, code, breakpoints = [] } = req.body;
+    if (language !== 'python') {
+        return next(errorHandler(400, 'Only python debugging supported.'));
+    }
+    await fs.promises.mkdir(TEMP_DIR, { recursive: true });
+    const uniqueId = uuidv4();
+    const tracerPath = path.join(__dirname, 'api', 'utils', 'pythonTracer.py');
+    const filePath = path.join(TEMP_DIR, `${uniqueId}.py`);
+    try {
+        await fs.promises.writeFile(filePath, code);
+        const { stdout } = await execFileAsync('python3', [tracerPath, filePath, JSON.stringify(breakpoints)], { timeout: 5000 });
+        const data = JSON.parse(stdout);
+        if (data.status === 'error') {
+            return res.status(200).json({ error: true, message: data.error });
+        }
+        const sessionId = uuidv4();
+        debugSessions[sessionId] = {
+            events: data.traces,
+            pointer: -1,
+            breakpoints: new Set(breakpoints),
+        };
+        return res.status(200).json({ sessionId });
+    } catch (err) {
+        return res.status(200).json({ error: true, message: err.message });
+    } finally {
+        try { await fs.promises.unlink(filePath); } catch {}
+    }
+};
+
+export const debuggerCommand = (req, res, next) => {
+    const { sessionId, command, line } = req.body;
+    const session = debugSessions[sessionId];
+    if (!session) {
+        return next(errorHandler(404, 'Session not found'));
+    }
+    const { events, breakpoints } = session;
+    let ptr = session.pointer;
+
+    const advance = () => {
+        ptr += 1;
+        if (ptr >= events.length) {
+            session.pointer = events.length - 1;
+            return null;
+        }
+        session.pointer = ptr;
+        return events[ptr];
+    };
+
+    if (command === 'step') {
+        const ev = advance();
+        return res.status(200).json({ event: ev, done: ev === null });
+    }
+
+    if (command === 'continue') {
+        ptr += 1;
+        while (ptr < events.length && !breakpoints.has(events[ptr].line)) {
+            ptr += 1;
+        }
+        if (ptr >= events.length) ptr = events.length - 1;
+        session.pointer = ptr;
+        return res.status(200).json({ event: events[ptr], done: ptr === events.length - 1 });
+    }
+
+    if (command === 'next') {
+        const depth = events[ptr]?.callStack?.length || 0;
+        ptr += 1;
+        while (ptr < events.length && (events[ptr].callStack?.length || 0) > depth) {
+            ptr += 1;
+        }
+        if (ptr >= events.length) ptr = events.length - 1;
+        session.pointer = ptr;
+        return res.status(200).json({ event: events[ptr], done: ptr === events.length - 1 });
+    }
+
+    if (command === 'out') {
+        const depth = events[ptr]?.callStack?.length || 0;
+        ptr += 1;
+        while (ptr < events.length && (events[ptr].callStack?.length || 0) >= depth) {
+            ptr += 1;
+        }
+        if (ptr >= events.length) ptr = events.length - 1;
+        session.pointer = ptr;
+        return res.status(200).json({ event: events[ptr], done: ptr === events.length - 1 });
+    }
+
+    if (command === 'setBreakpoint') {
+        if (typeof line === 'number') {
+            breakpoints.add(line);
+        }
+        return res.status(200).json({ breakpoints: Array.from(breakpoints) });
+    }
+
+    return next(errorHandler(400, 'Unknown debugger command'));
 };
