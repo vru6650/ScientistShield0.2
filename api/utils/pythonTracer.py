@@ -1,7 +1,7 @@
 import sys
 import json
 import io
-import runpy
+import ast
 
 traces = []
 
@@ -15,6 +15,42 @@ def tracefunc(frame, event, arg):
         })
     return tracefunc
 
+
+def trace_expr(value, line, expr_source):
+    traces.append({
+        'event': 'expr',
+        'line': line,
+        'expr': expr_source,
+        'value': repr(value),
+    })
+    return value
+
+
+class ExprTracer(ast.NodeTransformer):
+    def __init__(self, source):
+        self.source = source
+
+    def visit(self, node):
+        node = super().visit(node)
+        if isinstance(node, ast.expr) and not isinstance(node, (ast.Constant, ast.Name)):
+            expr_source = ast.get_source_segment(self.source, node) or ''
+            line = getattr(node, 'lineno', -1)
+            new_node = ast.Call(
+                func=ast.Name(id='trace_expr', ctx=ast.Load()),
+                args=[node, ast.Constant(line), ast.Constant(expr_source)],
+                keywords=[]
+            )
+            return ast.copy_location(new_node, node)
+        return node
+
+
+def instrument_code(code, script_path):
+    tree = ast.parse(code, filename=script_path, mode='exec')
+    tree = ExprTracer(code).visit(tree)
+    ast.fix_missing_locations(tree)
+    return tree
+
+
 def main(script_path):
     global traces
     traces = []
@@ -26,7 +62,9 @@ def main(script_path):
     status = 'ok'
     error = ''
     try:
-        exec(compile(code, script_path, 'exec'), {})
+        tree = instrument_code(code, script_path)
+        global_env = {'trace_expr': trace_expr}
+        exec(compile(tree, script_path, 'exec'), global_env, global_env)
     except Exception as e:
         status = 'error'
         error = str(e)

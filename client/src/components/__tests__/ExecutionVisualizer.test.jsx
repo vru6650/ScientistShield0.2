@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ExecutionVisualizer from '../ExecutionVisualizer';
 
 // Mock the Monaco editor to a simple textarea for tests
@@ -19,6 +19,7 @@ jest.mock('d3', () => ({
 describe('ExecutionVisualizer', () => {
   beforeEach(() => {
     localStorage.clear();
+    global.fetch = undefined;
   });
 
   test('reset button restores default code snippet', () => {
@@ -32,5 +33,29 @@ describe('ExecutionVisualizer', () => {
     fireEvent.click(resetBtn);
 
     expect(editor.value).toContain('function greet');
+  });
+
+  test('shows expression evaluation step', async () => {
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            events: [
+              { event: 'expr', line: 1, expr: '2+2', value: '4', locals: {} },
+            ],
+            output: '',
+            error: false,
+          }),
+      })
+    );
+    render(<ExecutionVisualizer />);
+
+    const runBtn = screen.getByText('Run');
+    fireEvent.click(runBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('expr-eval').textContent).toContain('2+2');
+    });
   });
 });

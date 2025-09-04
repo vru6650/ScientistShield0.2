@@ -66,8 +66,14 @@ export default function ExecutionVisualizer() {
         const codeLines = code.split('\n');
 
         const nodes = events.map((event, i) => {
-            const lineContent = codeLines[event.line - 1]?.trim() || `Line ${event.line}`;
+            let lineContent;
+            if (event.event === 'expr') {
+                lineContent = `${event.expr} => ${event.value}`;
+            } else {
+                lineContent = codeLines[event.line - 1]?.trim() || `Line ${event.line}`;
+            }
             let type = 'statement';
+            if (event.event === 'expr') type = 'expression';
             if (/^function|=>/.test(lineContent)) type = 'function';
             if (/^if|else/.test(lineContent)) type = 'decision';
             if (/^for|while/.test(lineContent)) type = 'loop';
@@ -107,6 +113,7 @@ export default function ExecutionVisualizer() {
                 case 'function': return '#22c55e'; // green-500
                 case 'decision': return '#f59e0b'; // amber-500
                 case 'loop': return '#3b82f6'; // blue-500
+                case 'expression': return '#bfdbfe'; // blue-200
                 default: return '#6b7280'; // gray-500
             }
         };
@@ -320,6 +327,11 @@ export default function ExecutionVisualizer() {
                 {currentStep >= 0 && events[currentStep] && (
                     <div className="mb-4">
                         <p className="font-semibold">Step {currentStep + 1} of {events.length} (line {events[currentStep].line})</p>
+                        {events[currentStep].event === 'expr' && (
+                            <div data-testid="expr-eval" className="mt-2 p-2 bg-blue-100 rounded">
+                                <code>{events[currentStep].expr} => {events[currentStep].value}</code>
+                            </div>
+                        )}
                         <h4 className="font-semibold mt-2">Local Variables:</h4>
                         <pre className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded max-h-24 overflow-auto">
                             <code>{JSON.stringify(events[currentStep].locals || {}, null, 2)}</code>
