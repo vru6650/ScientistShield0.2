@@ -1,4 +1,3 @@
-// client/src/components/ExecutionVisualizer.jsx
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import * as d3 from 'd3';
@@ -7,11 +6,16 @@ import LanguageSelector from './LanguageSelector';
 const defaultCodeSnippets = {
     javascript: `function greet(name) {
   const message = 'Hello, ' + name;
+  if (name === 'World') {
+    console.log('Greeting the whole world!');
+  }
   return message;
 }
 
-const result = greet('World');
-console.log(result);`,
+for (let i = 0; i < 2; i++) {
+  const result = greet('World');
+  console.log(result);
+}`,
     python: `def greet(name):
     message = "Hello, " + name
     return message
@@ -36,45 +40,144 @@ export default function ExecutionVisualizer() {
     const editorRef = useRef(null);
     const monacoRef = useRef(null);
     const decorationsRef = useRef([]);
+    const simulationRef = useRef();
 
-    // Load code from localStorage when language changes
     useEffect(() => {
         const stored = localStorage.getItem(`execvis_code_${language}`);
         setCode(stored || defaultCodeSnippets[language]);
     }, [language]);
 
-    // Persist code changes per language
     useEffect(() => {
         localStorage.setItem(`execvis_code_${language}`, code);
     }, [code, language]);
 
+    // Advanced D3.js Flowchart Rendering
     useEffect(() => {
         const svg = d3.select(svgRef.current);
-        svg.selectAll('*').remove();
-        if (events.length === 0) return;
-        const stepWidth = 40;
-        const width = events.length * stepWidth + 20;
-        const height = 60;
+        const width = svg.node().parentElement.clientWidth;
+        const height = 500;
         svg.attr('width', width).attr('height', height);
-        const g = svg.append('g').attr('transform', `translate(10,${height / 2})`);
-        g.selectAll('circle')
-            .data(events)
-            .enter()
-            .append('circle')
-            .attr('cx', (_, i) => i * stepWidth)
-            .attr('r', 8)
-            .attr('fill', (_, i) => (i === currentStep ? '#9333ea' : '#bbb'))
-            .attr('stroke', '#333');
-        g.selectAll('text')
-            .data(events)
-            .enter()
-            .append('text')
-            .attr('x', (_, i) => i * stepWidth)
-            .attr('y', 20)
+
+        if (events.length === 0 || !code) {
+            svg.selectAll('*').remove();
+            return;
+        }
+
+        const codeLines = code.split('\n');
+
+        const nodes = events.map((event, i) => {
+            const lineContent = codeLines[event.line - 1]?.trim() || `Line ${event.line}`;
+            let type = 'statement';
+            if (/^function|=>/.test(lineContent)) type = 'function';
+            if (/^if|else/.test(lineContent)) type = 'decision';
+            if (/^for|while/.test(lineContent)) type = 'loop';
+
+            return {
+                id: i,
+                line: event.line,
+                label: `L${event.line}: ${lineContent.substring(0, 25)}${lineContent.length > 25 ? '...' : ''}`,
+                type: type,
+            };
+        });
+
+        const links = d3.range(nodes.length - 1).map(i => ({ source: nodes[i].id, target: nodes[i+1].id }));
+
+        if (simulationRef.current) {
+            simulationRef.current.stop();
+        }
+
+        svg.selectAll('*').remove();
+
+        const container = svg.append('g');
+
+        svg.call(d3.zoom().on('zoom', (event) => {
+            container.attr('transform', event.transform);
+        }));
+
+        const link = container.append('g')
+            .attr('stroke', '#999')
+            .attr('stroke-opacity', 0.6)
+            .selectAll('line')
+            .data(links)
+            .join('line')
+            .attr('stroke-width', 2);
+
+        const getNodeColor = (type) => {
+            switch (type) {
+                case 'function': return '#22c55e'; // green-500
+                case 'decision': return '#f59e0b'; // amber-500
+                case 'loop': return '#3b82f6'; // blue-500
+                default: return '#6b7280'; // gray-500
+            }
+        };
+
+        const node = container.append('g')
+            .selectAll('g')
+            .data(nodes)
+            .join('g');
+
+        node.append('rect')
+            .attr('width', 200)
+            .attr('height', 40)
+            .attr('rx', 5)
+            .attr('x', -100)
+            .attr('y', -20)
+            .attr('fill', d => getNodeColor(d.type))
+            .attr('stroke', '#fff')
+            .attr('stroke-width', 2);
+
+        node.append('text')
             .attr('text-anchor', 'middle')
-            .attr('font-size', '10px')
-            .text((e) => `L${e.line}`);
-    }, [events, currentStep]);
+            .attr('dy', '0.35em')
+            .attr('fill', 'white')
+            .style('font-family', 'monospace')
+            .style('font-size', '12px')
+            .text(d => d.label);
+
+        const drag = (simulation) => {
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+            return d3.drag().on("start", dragstarted).on("drag", dragged).on("end", dragended);
+        }
+
+        node.call(drag(simulationRef.current));
+
+        simulationRef.current = d3.forceSimulation(nodes)
+            .force('link', d3.forceLink(links).id(d => d.id).distance(120))
+            .force('charge', d3.forceManyBody().strength(-300))
+            .force('center', d3.forceCenter(width / 2, height / 2))
+            .on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+                node.attr('transform', d => `translate(${d.x}, ${d.y})`);
+            });
+    }, [events, code]);
+
+    // Update node styles based on current step
+    useEffect(() => {
+        d3.select(svgRef.current).selectAll('rect')
+            .transition()
+            .duration(300)
+            .attr('stroke', (d, i) => i === currentStep ? '#facc15' : '#fff')
+            .attr('stroke-width', (d, i) => i === currentStep ? 4 : 2)
+            .style('filter', (d, i) => i === currentStep ? 'drop-shadow(0 0 8px #facc15)' : 'drop-shadow(0 4px 6px rgb(0 0 0 / 0.1))');
+    }, [currentStep]);
+
 
     useEffect(() => {
         if (!isPlaying) return;
@@ -95,12 +198,10 @@ export default function ExecutionVisualizer() {
         decorationsRef.current = editorRef.current.deltaDecorations(
             decorationsRef.current,
             line
-                ? [
-                      {
-                          range: new monaco.Range(line, 1, line, 1),
-                          options: { isWholeLine: true, className: 'highlight-line' },
-                      },
-                  ]
+                ? [{
+                    range: new monaco.Range(line, 1, line, 1),
+                    options: { isWholeLine: true, className: 'highlight-line' },
+                }]
                 : []
         );
     }, [currentStep, events]);
@@ -122,10 +223,7 @@ export default function ExecutionVisualizer() {
             const data = await res.json();
 
             if (!res.ok || data.error) {
-                const errorMsg =
-                    data.message ||
-                    data.events?.find((e) => e.event === 'error')?.message ||
-                    'Execution error';
+                const errorMsg = data.message || data.events?.find((e) => e.event === 'error')?.message || 'Execution error';
                 setError(errorMsg);
                 return;
             }
@@ -144,7 +242,6 @@ export default function ExecutionVisualizer() {
         }
     }, [language, code]);
 
-    // Keyboard shortcut: Ctrl+Enter to run the code
     useEffect(() => {
         const handler = (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -181,16 +278,13 @@ export default function ExecutionVisualizer() {
                     editorRef.current = editor;
                     monacoRef.current = monaco;
                 }}
-                // Monaco may supply `undefined` when clearing the editor; coerce to empty string
                 onChange={(value) => setCode(value ?? '')}
             />
             <div className="flex gap-2">
                 <button
                     onClick={runCode}
                     disabled={isRunning}
-                    className={`px-4 py-2 rounded text-white ${
-                        isRunning ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700'
-                    }`}
+                    className={`px-4 py-2 rounded text-white ${ isRunning ? 'bg-purple-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700' }`}
                 >
                     {isRunning ? 'Running...' : 'Run'}
                 </button>
@@ -206,106 +300,47 @@ export default function ExecutionVisualizer() {
             {events.length > 0 && (
                 <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                        <button
-                            onClick={() => {
-                                setIsPlaying(false);
-                                setCurrentStep((s) => Math.max(0, s - 1));
-                            }}
-                            disabled={currentStep <= 0}
-                            className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
-                        >
-                            Prev
-                        </button>
-                        <button
-                            onClick={() => {
-                                setIsPlaying((p) => {
-                                    if (!p && currentStep < 0 && events.length > 0) setCurrentStep(0);
-                                    return !p;
-                                });
-                            }}
-                            className="px-3 py-1 rounded bg-gray-300"
-                        >
-                            {isPlaying ? 'Pause' : 'Play'}
-                        </button>
-                        <button
-                            onClick={() => {
-                                setIsPlaying(false);
-                                setCurrentStep((s) => Math.min(events.length - 1, s + 1));
-                            }}
-                            disabled={currentStep >= events.length - 1}
-                            className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50"
-                        >
-                            Next
-                        </button>
-                        <button
-                            onClick={() => {
-                                setIsPlaying(false);
-                                setCurrentStep(0);
-                            }}
-                            className="px-3 py-1 rounded bg-gray-300"
-                        >
-                            Reset
-                        </button>
+                        <button onClick={() => { setIsPlaying(false); setCurrentStep((s) => Math.max(0, s - 1)); }} disabled={currentStep <= 0} className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50">Prev</button>
+                        <button onClick={() => { setIsPlaying((p) => { if (!p && currentStep < 0 && events.length > 0) setCurrentStep(0); return !p; }); }} className="px-3 py-1 rounded bg-gray-300">{isPlaying ? 'Pause' : 'Play'}</button>
+                        <button onClick={() => { setIsPlaying(false); setCurrentStep((s) => Math.min(events.length - 1, s + 1)); }} disabled={currentStep >= events.length - 1} className="px-3 py-1 rounded bg-gray-300 disabled:opacity-50">Next</button>
+                        <button onClick={() => { setIsPlaying(false); setCurrentStep(0); }} className="px-3 py-1 rounded bg-gray-300">Reset</button>
                         <div className="flex items-center space-x-1 ml-4">
                             <label className="text-sm">Speed</label>
-                            <input
-                                type="range"
-                                min="100"
-                                max="2000"
-                                step="100"
-                                value={playSpeed}
-                                onChange={(e) => setPlaySpeed(Number(e.target.value))}
-                                className="w-32"
-                            />
+                            <input type="range" min="100" max="2000" step="100" value={playSpeed} onChange={(e) => setPlaySpeed(Number(e.target.value))} className="w-32" />
                             <span className="text-xs">{playSpeed}ms</span>
                         </div>
                     </div>
-                    <input
-                        type="range"
-                        min={0}
-                        max={events.length - 1}
-                        value={currentStep}
-                        onChange={(e) => {
-                            setIsPlaying(false);
-                            setCurrentStep(Number(e.target.value));
-                        }}
-                        className="w-full"
-                    />
+                    <input type="range" min={0} max={events.length - 1} value={currentStep} onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} className="w-full" />
                 </div>
             )}
-            <div className="relative p-4 bg-white dark:bg-gray-800 rounded shadow min-h-[120px] space-y-2">
+            <div className="relative p-4 bg-white dark:bg-gray-800 rounded shadow min-h-[550px] space-y-2 overflow-hidden">
                 {events.length === 0 && !isRunning && (
-                    <p className="text-gray-500">Run the code to see execution steps.</p>
+                    <p className="text-gray-500">Run the code to see the execution flowchart.</p>
                 )}
                 {currentStep >= 0 && events[currentStep] && (
-                    <div>
-                        <p className="font-semibold">
-                            Step {currentStep + 1} of {events.length} (line {events[currentStep].line})
-                        </p>
-                        <pre className="text-sm bg-gray-100 p-2 rounded">
+                    <div className="mb-4">
+                        <p className="font-semibold">Step {currentStep + 1} of {events.length} (line {events[currentStep].line})</p>
+                        <h4 className="font-semibold mt-2">Local Variables:</h4>
+                        <pre className="text-sm bg-gray-100 dark:bg-gray-700 p-2 rounded max-h-24 overflow-auto">
                             <code>{JSON.stringify(events[currentStep].locals || {}, null, 2)}</code>
                         </pre>
                     </div>
                 )}
-                <svg ref={svgRef} className="w-full"></svg>
+                <svg ref={svgRef}></svg>
             </div>
             {(output || logs.length > 0) && (
                 <div className="p-4 bg-white dark:bg-gray-800 rounded shadow space-y-2">
                     {output && (
                         <div>
                             <p className="font-semibold">Output</p>
-                            <pre className="text-sm bg-gray-100 p-2 rounded whitespace-pre-wrap">
-                                <code>{output}</code>
-                            </pre>
+                            <pre className="text-sm bg-gray-100 p-2 rounded whitespace-pre-wrap"><code>{output}</code></pre>
                         </div>
                     )}
                     {logs.length > 0 && (
                         <div>
                             <p className="font-semibold">Console</p>
                             <pre className="text-sm bg-gray-100 p-2 rounded whitespace-pre-wrap">
-                                {logs.map((l, i) => (
-                                    <div key={i}>{l.value}</div>
-                                ))}
+                                {logs.map((l, i) => (<div key={i}>{l.value}</div>))}
                             </pre>
                         </div>
                     )}
